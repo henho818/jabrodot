@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/UI/Dialog/TextAnimator.cs" id="1_anim"]
+[ext_resource type="Script" path="res://scripts/UI/Dialog/SubDialogLine.cs" id="2_line"]
+
+[node name="SubDialogLine" type="PanelContainer"]
+custom_minimum_size = Vector2(400, 0)
+mouse_filter = 0
+script = ExtResource("2_line")
+
+[node name="Margin" type="MarginContainer" parent="."]
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="Text" type="RichTextLabel" parent="Margin"]
+script = ExtResource("1_anim")
+mouse_filter = 2
+bbcode_enabled = false
+fit_content = true
+scroll_active = false

@@ -18,6 +18,10 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+AgentConfigRepository="*res://scripts/Data/AgentConfigRepository.cs"
+DialogRepository="*res://scripts/Data/DialogRepository.cs"
+SubDialogRepository="*res://scripts/Data/SubDialogRepository.cs"
+SubDialogStyleRepository="*res://scripts/Data/SubDialogStyleRepository.cs"
 GameBootstrap="*res://scripts/Core/GameBootstrap.cs"
 
 [dotnet]

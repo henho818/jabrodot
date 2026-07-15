@@ -1,13 +1,16 @@
 using Godot;
+using Jabroni.AI;
 using Jabroni.Core;
 
 namespace Jabroni.World;
 
 /// <summary>
 /// Raycasts from the mouse against the Pathable and Agent physics layers on click.
-/// Clicking the ground walks the avatar there; clicking an agent (e.g. an NPC) walks
-/// the avatar to social distance and faces it, in place of a proper dialog trigger
-/// (that arrives in a later milestone).
+/// Clicking the ground walks the avatar there; clicking an agent (e.g. an NPC) walks the
+/// avatar to social distance and faces it. Once arrived, the NPC's own AgentAI takes over
+/// (setting its ChatTarget triggers its FSM into Chatting, which opens the real dialog) --
+/// this script still owns the avatar's approach movement itself until the avatar gets its
+/// own AI-driven FSM in a later milestone.
 ///
 /// Node wiring is hardcoded here (relative paths + GD.Load) rather than exposed via
 /// [Export], because this Godot build (4.7 stable, Windows ARM64, Mono) does not apply
@@ -30,6 +33,16 @@ public partial class ClickToMove : Node3D
         _avatar = GetNode<AvatarLocomotion>("Avatar");
         _camera = GetNode<Camera3D>("CameraRig/PitchPivot/Camera3D");
         _destinationCursorScene = GD.Load<PackedScene>(DestinationCursorScenePath);
+        _avatar.ArrivedAtNpc += OnAvatarArrivedAtNpc;
+    }
+
+    private void OnAvatarArrivedAtNpc(Node3D npc)
+    {
+        var npcAi = npc.GetNodeOrNull<AgentAI>("AgentAI");
+        if (npcAi != null)
+        {
+            npcAi.ChatTarget = _avatar;
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)

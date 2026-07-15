@@ -1,77 +1,42 @@
+using System;
 using Godot;
 
 namespace Jabroni.World;
 
-public partial class AvatarLocomotion : CharacterBody3D
+/// <summary>
+/// Avatar-specific locomotion: MoveTo can also specify a Node3D to face once arrived (e.g.
+/// an NPC being approached), firing ArrivedAtNpc once when that happens so other systems
+/// (ClickToMove) can hand off to the NPC's own AI.
+/// </summary>
+public partial class AvatarLocomotion : NavMeshLocomotion
 {
-    [Export] public float Speed { get; set; } = 5f;
-    [Export] public float Gravity { get; set; } = 20f;
-    [Export] public float RotationSpeed { get; set; } = 10f;
+    public event Action<Node3D> ArrivedAtNpc;
 
-    private NavigationAgent3D _agent;
-    private Node3D _faceTargetOnArrival;
+    private Node3D _approachTarget;
+    private bool _arrivalNotified;
 
-    public override void _Ready()
+    public void MoveTo(Vector3 destination, Node3D faceOnArrival)
     {
-        _agent = GetNode<NavigationAgent3D>("NavigationAgent3D");
-    }
-
-    /// <summary>Walks to destination; once arrived, turns to face faceOnArrival if given (e.g. an NPC being approached).</summary>
-    public void MoveTo(Vector3 destination, Node3D faceOnArrival = null)
-    {
-        _agent.TargetPosition = destination;
-        _faceTargetOnArrival = faceOnArrival;
+        _approachTarget = faceOnArrival;
+        _arrivalNotified = false;
+        MoveTo(destination);
     }
 
     public override void _PhysicsProcess(double delta)
     {
-        Vector3 velocity = Velocity;
-        float dt = (float)delta;
+        base._PhysicsProcess(delta);
 
-        velocity.Y = IsOnFloor() ? 0f : velocity.Y - Gravity * dt;
-
-        if (!_agent.IsNavigationFinished())
-        {
-            Vector3 nextPos = _agent.GetNextPathPosition();
-            Vector3 toNext = nextPos - GlobalPosition;
-            toNext.Y = 0f;
-
-            if (toNext.LengthSquared() > 0.0001f)
-            {
-                Vector3 direction = toNext.Normalized();
-                velocity.X = direction.X * Speed;
-                velocity.Z = direction.Z * Speed;
-
-                Basis targetBasis = Basis.LookingAt(direction, Vector3.Up);
-                Basis = Basis.Slerp(targetBasis, RotationSpeed * dt);
-            }
-        }
-        else
-        {
-            velocity.X = 0f;
-            velocity.Z = 0f;
-            FaceArrivalTargetIfAny(dt);
-        }
-
-        Velocity = velocity;
-        MoveAndSlide();
-    }
-
-    private void FaceArrivalTargetIfAny(float dt)
-    {
-        if (_faceTargetOnArrival == null)
+        if (_approachTarget == null || !HasArrived)
         {
             return;
         }
 
-        Vector3 toTarget = _faceTargetOnArrival.GlobalPosition - GlobalPosition;
-        toTarget.Y = 0f;
-        if (toTarget.LengthSquared() <= 0.0001f)
-        {
-            return;
-        }
+        FaceWorldPosition(_approachTarget.GlobalPosition);
 
-        Basis targetBasis = Basis.LookingAt(toTarget.Normalized(), Vector3.Up);
-        Basis = Basis.Slerp(targetBasis, RotationSpeed * dt);
+        if (!_arrivalNotified)
+        {
+            _arrivalNotified = true;
+            ArrivedAtNpc?.Invoke(_approachTarget);
+        }
     }
 }

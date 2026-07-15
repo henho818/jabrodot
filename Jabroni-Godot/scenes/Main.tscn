@@ -4,6 +4,10 @@
 [ext_resource type="Script" uid="uid://kyg3y0m58fsm" path="res://scripts/World/VillageNavigation.cs" id="2_nav"]
 [ext_resource type="Script" uid="uid://bqdwtw3xe5ew6" path="res://scripts/World/AvatarLocomotion.cs" id="3_avatar"]
 [ext_resource type="Script" uid="uid://cyr68mrr56ram" path="res://scripts/World/ClickToMove.cs" id="4_click"]
+[ext_resource type="PackedScene" path="res://scenes/UI/DialogBox.tscn" id="6_dialogbox"]
+[ext_resource type="Script" uid="uid://c27fvmmfb3xjk" path="res://scripts/World/NavMeshLocomotion.cs" id="7_navloco"]
+[ext_resource type="Script" uid="uid://ctpf7mq14pl0t" path="res://scripts/AI/NpcAgentAI.cs" id="8_npcai"]
+[ext_resource type="Script" uid="uid://clkg3l557tkga" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -57,9 +61,14 @@ height = 1.8
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_npc"]
 albedo_color = Color(0.85, 0.35, 0.15, 1)
 
+[sub_resource type="BoxMesh" id="BoxMesh_8mft4"]
+
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
 radius = 0.4
 height = 1.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detect"]
+radius = 8.0
 
 [node name="Main" type="Node3D" unique_id=821709867]
 script = ExtResource("4_click")
@@ -227,14 +236,46 @@ shape = SubResource("CapsuleShape3D_avatar")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="Avatar" unique_id=612729479]
 
-[node name="NPC" type="StaticBody3D" parent="." unique_id=73689340]
+[node name="NPC" type="CharacterBody3D" parent="." unique_id=73689340]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 collision_layer = 4
-collision_mask = 0
+collision_mask = 3
+script = ExtResource("7_navloco")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NPC" unique_id=747798193]
 mesh = SubResource("CapsuleMesh_npc")
 surface_material_override/0 = SubResource("StandardMaterial3D_npc")
 
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NPC/MeshInstance3D" unique_id=1257280107]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.25, -0.25)
+mesh = SubResource("BoxMesh_8mft4")
+
 [node name="CollisionShape3D" type="CollisionShape3D" parent="NPC" unique_id=29020683]
 shape = SubResource("CapsuleShape3D_npc")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="NPC" unique_id=1865055831]
+radius = 0.4
+
+[node name="DetectionSphere" type="Area3D" parent="NPC" unique_id=1877120443]
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("9_detect")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NPC/DetectionSphere" unique_id=2066578395]
+shape = SubResource("SphereShape3D_detect")
+
+[node name="DebugStateLabel" type="Label3D" parent="NPC" unique_id=1902563723]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+billboard = 1
+text = "..."
+font_size = 48
+outline_size = 8
+
+[node name="AgentAI" type="Node" parent="NPC" unique_id=1124203113]
+script = ExtResource("8_npcai")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=698920733]
+
+[node name="DialogBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
+layout_mode = 3
+anchors_preset = 15

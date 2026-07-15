@@ -1,0 +1,2 @@
+StyleID	BgImage	BgColor	TextColor	ExpandWidth
+NPC_speech	Background	#FFFFFFFF	#000000FF	false

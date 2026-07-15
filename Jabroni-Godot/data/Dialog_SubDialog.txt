@@ -1,0 +1,2 @@
+SubDialogID	LocalizationDialogID	Style	Next	ItemAward	ItemDependency	Pitch
+S.TestSpeech	LD.Weather.Rain.01	NPC_speech	<end>			3
