@@ -1,0 +1,2 @@
+ItemId	Type	SubType	Name	Desc	Icon	Model	Value	SellValue
+copper1	stack		I.Copper1	I.Copper1Desc	copper1		1	1

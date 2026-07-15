@@ -8,7 +8,8 @@ namespace Jabroni.UI.Dialog;
 /// Top-level dialog window: resolves a Dialog's SubDialog lines from the data repositories,
 /// cascades their typewriter reveals one after another, and advances/closes on click,
 /// mirroring the source project's DialogBox/SubDialogBox cascade-and-click-to-advance model.
-/// No avatar portrait yet (deferred until sprite loading exists); text-only for this milestone.
+/// Also swaps the speaker portrait (see AvatarSheet) whenever a new Dialog is triggered --
+/// Dialogs without an AvatarSheet (e.g. the narrator) hide the portrait entirely.
 /// Exposes a single Instance (only one dialog box exists) so AI tasks can trigger/observe
 /// it without needing a scene-path lookup.
 /// </summary>
@@ -28,13 +29,17 @@ public partial class DialogBox : Control
     };
 
     private VBoxContainer _lineContainer;
+    private TextureRect _portrait;
+    private Texture2D _avatarTexture;
     private PackedScene _lineScene;
     private readonly List<SubDialogLine> _activeLines = new();
 
     public override void _Ready()
     {
         Instance = this;
-        _lineContainer = GetNode<VBoxContainer>("Panel/Lines");
+        _lineContainer = GetNode<VBoxContainer>("Panel/HBox/Lines");
+        _portrait = GetNode<TextureRect>("Panel/HBox/Portrait");
+        _avatarTexture = GD.Load<Texture2D>(AvatarSheet.TexturePath);
         _lineScene = GD.Load<PackedScene>(SubDialogLineScenePath);
         Visible = false;
     }
@@ -50,10 +55,27 @@ public partial class DialogBox : Control
         }
 
         ClearLines();
+        UpdatePortrait(dialogRow);
         BuildLines(dialogRow);
 
         Visible = true;
         StartCascadeFrom(0);
+    }
+
+    private void UpdatePortrait(TsvRow dialogRow)
+    {
+        string sheet = dialogRow.GetString("AvatarSheet");
+        int avatarIndex = dialogRow.GetInt("AvatarIndex", -1);
+        Rect2? cellRect = !string.IsNullOrEmpty(sheet) ? AvatarSheet.GetCellRect(avatarIndex) : null;
+
+        if (cellRect == null)
+        {
+            _portrait.Visible = false;
+            return;
+        }
+
+        _portrait.Texture = new AtlasTexture { Atlas = _avatarTexture, Region = cellRect.Value };
+        _portrait.Visible = true;
     }
 
     private void BuildLines(TsvRow dialogRow)

@@ -18,5 +18,17 @@ offset_right = -40.0
 offset_bottom = -40.0
 mouse_filter = 1
 
-[node name="Lines" type="VBoxContainer" parent="Panel"]
+[node name="HBox" type="HBoxContainer" parent="Panel"]
+theme_override_constants/separation = 12
+
+[node name="Portrait" type="TextureRect" parent="Panel/HBox"]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+size_flags_vertical = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Lines" type="VBoxContainer" parent="Panel/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 8

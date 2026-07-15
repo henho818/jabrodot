@@ -1,2 +1,7 @@
 key	en	zh	ja	es
-LD.Weather.Rain.01	It looks like it's going to rain today.	看起来今天要下雨了。	今日は雨が降りそうです。	Parece que va a llover hoy.
+LD.Weather.Rain.01	It looks like it's going to rain today…	今天好像要下雨了。	今日は雨が降りそうです。	Parece que va a llover hoy.
+LD.Weather.Rain.02	I better bring an umbrella.	我最好带把伞。	傘を持ってきたほうがいい。	Mejor llevo un paraguas.
+LD.Weather.Rain.03	He decided to bring an umbrella after all.	毕竟他决定带一把雨伞。	彼は結局傘を持って行くことにした。	Decidió traer un paraguas después de todo.
+LD.OK	Okay.	好。	はい。	Bueno.
+I.Copper1	Copper Coin	铜币	銅貨	Moneda de Cobre
+I.Copper1Desc	Currency of the World Order	世界秩序的货币	世界秩序の通貨	Moneda del Orden Mundial

@@ -1,2 +1,4 @@
 StyleID	BgImage	BgColor	TextColor	ExpandWidth
-NPC_speech	Background	#FFFFFFFF	#000000FF	false
+NPC_speech	Background	#FFFFFFFF	#000000FF	FALSE
+NPC_thought	Background	#DDDDDDFF	#222222FF	FALSE
+narrator	Background	#00000088	#FFFFFFFF	FALSE
