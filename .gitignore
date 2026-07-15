@@ -1,0 +1,25 @@
+# Godot 4+ imported/generated cache — fully regenerated from source assets
+.godot/
+
+# Mono/C# build artifacts
+.mono/
+data_*/
+mono_crash.*.json
+
+# C# build output (if using the .NET build)
+bin/
+obj/
+*.csproj.user
+
+# Import/export artifacts
+export.cfg
+export_presets.cfg  # only if it contains secrets like export passwords; otherwise many teams keep this one
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.vscode/
+.idea/
+*.sln.iml
