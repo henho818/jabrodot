@@ -8,6 +8,10 @@
 [ext_resource type="Script" path="res://scripts/AI/NpcAgentAI.cs" id="8_npcai"]
 [ext_resource type="Script" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
 [ext_resource type="Script" path="res://scripts/AI/AvatarAgentAI.cs" id="10_avatarai"]
+[ext_resource type="Script" path="res://scripts/World/DirectTranslationLocomotion.cs" id="11_directloco"]
+[ext_resource type="Script" path="res://scripts/AI/SharkAgentAI.cs" id="12_sharkai"]
+[ext_resource type="Script" path="res://scripts/AI/AgentVision.cs" id="13_vision"]
+[ext_resource type="Script" path="res://scripts/World/SurfaceLightController.cs" id="14_causticspivot"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -69,6 +73,30 @@ height = 1.8
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_detect"]
 radius = 8.0
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_water"]
+size = Vector2(44, 24)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_water"]
+transparency = 1
+albedo_color = Color(0.1, 0.35, 0.55, 0.55)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_shark"]
+radius = 1.0
+height = 4.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shark"]
+albedo_color = Color(0.25, 0.3, 0.35, 1)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_shark"]
+radius = 1.0
+height = 4.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_shark_detect"]
+radius = 35.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_shark_vision"]
+radius = 21.0
 
 [node name="Main" type="Node3D" unique_id=821709867]
 script = ExtResource("4_click")
@@ -290,3 +318,59 @@ script = ExtResource("8_npcai")
 [node name="DialogBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
 layout_mode = 3
 anchors_preset = 15
+
+[node name="WaterZone" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 45)
+mesh = SubResource("PlaneMesh_water")
+surface_material_override/0 = SubResource("StandardMaterial3D_water")
+
+[node name="CausticsPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 45)
+script = ExtResource("14_causticspivot")
+
+[node name="Light" type="OmniLight3D" parent="CausticsPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 0)
+light_color = Color(0.6, 0.85, 1, 1)
+light_energy = 1.5
+omni_range = 20.0
+
+[node name="Shark" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, 35)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("11_directloco")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Shark"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_shark")
+surface_material_override/0 = SubResource("StandardMaterial3D_shark")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+shape = SubResource("CapsuleShape3D_shark")
+
+[node name="DetectionSphere" type="Area3D" parent="Shark"]
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("9_detect")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark/DetectionSphere"]
+shape = SubResource("SphereShape3D_shark_detect")
+
+[node name="Vision" type="Area3D" parent="Shark"]
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("13_vision")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark/Vision"]
+shape = SubResource("SphereShape3D_shark_vision")
+
+[node name="DebugStateLabel" type="Label3D" parent="Shark"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+billboard = 1
+font_size = 48
+outline_size = 8
+text = "..."
+
+[node name="AgentAI" type="Node" parent="Shark"]
+script = ExtResource("12_sharkai")

@@ -2,27 +2,27 @@ using Godot;
 
 namespace Jabroni.World;
 
-/// <summary>Shared NavigationAgent3D-driven CharacterBody3D movement for avatar/NPC archetypes.</summary>
-public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
+/// <summary>
+/// Straight-line movement ignoring the navmesh entirely -- used by agents that move
+/// through open space rather than on a baked walkable surface (the shark, swimming
+/// underwater, mirroring the source project's off-mesh shark movement). No gravity: the
+/// agent holds whatever Y it's placed/patrol-routed at, like a fish holding its depth.
+/// </summary>
+public partial class DirectTranslationLocomotion : CharacterBody3D, IAgentMover
 {
-    [Export] public float Speed { get; set; } = 5f;
-    [Export] public float Gravity { get; set; } = 20f;
-    [Export] public float RotationSpeed { get; set; } = 10f;
+    [Export] public float Speed { get; set; } = 4f;
+    [Export] public float RotationSpeed { get; set; } = 6f;
+    [Export] public float ArrivalDistance { get; set; } = 0.3f;
 
-    private NavigationAgent3D _agent;
+    private Vector3? _destination;
     private Vector3? _faceTarget;
 
-    public bool HasArrived => _agent.IsNavigationFinished();
-
-    public override void _Ready()
-    {
-        _agent = GetNode<NavigationAgent3D>("NavigationAgent3D");
-    }
+    public bool HasArrived => !_destination.HasValue || GlobalPosition.DistanceTo(_destination.Value) < ArrivalDistance;
 
     public void MoveTo(Vector3 destination)
     {
         _faceTarget = null;
-        _agent.TargetPosition = destination;
+        _destination = destination;
     }
 
     public void FaceWorldPosition(Vector3 position)
@@ -30,28 +30,24 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         _faceTarget = position;
     }
 
-    /// <summary>Cancels any in-flight navigation so the agent holds position (e.g. when a
-    /// patrol gets interrupted by a disturbance or a chat request).</summary>
     public void Stop()
     {
-        _agent.TargetPosition = GlobalPosition;
+        _destination = GlobalPosition;
     }
 
     public override void _PhysicsProcess(double delta)
     {
         float dt = (float)delta;
         Vector3 velocity = Velocity;
-        velocity.Y = IsOnFloor() ? 0f : velocity.Y - Gravity * dt;
 
         if (!HasArrived)
         {
-            Vector3 nextPos = _agent.GetNextPathPosition();
-            Vector3 toNext = nextPos - GlobalPosition;
-            toNext.Y = 0f;
+            Vector3 toDestination = _destination.Value - GlobalPosition;
+            toDestination.Y = 0f;
 
-            if (toNext.LengthSquared() > 0.0001f)
+            if (toDestination.LengthSquared() > 0.0001f)
             {
-                Vector3 direction = toNext.Normalized();
+                Vector3 direction = toDestination.Normalized();
                 velocity.X = direction.X * Speed;
                 velocity.Z = direction.Z * Speed;
                 Basis = LocomotionMath.TurnToward(Basis, direction, RotationSpeed, dt);
@@ -73,6 +69,7 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
             }
         }
 
+        velocity.Y = 0f;
         Velocity = velocity;
         MoveAndSlide();
     }

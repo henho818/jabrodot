@@ -7,6 +7,8 @@ public enum AIState
     Idle,
     Patrol,
     Alert,
+    Search,
+    Attack,
     NavToAgent,
     Chatting,
 }

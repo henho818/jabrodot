@@ -1,3 +1,4 @@
 ConfigID	AgentUID	Name	Prefab	BaseSpeed	AttackDistance	AlertDisengageTime	SearchDisengageTime	DetectionRadius	DialogId
 AC.Avatar	AC.Avatar	Player	Avatar.prefab	10	3	0	0	4
 AC.Rocky	AC.Rocky	Rocky Raccoon	NPC.prefab	5	3	1	0	8	D.TestSpeech
+AC.Shark	AC.Shark	Gillian Balmer	Shark.prefab	2.5	15	3	3	35
