@@ -1,5 +1,6 @@
 using Godot;
 using Jabroni.AI;
+using Jabroni.CameraControl;
 using Jabroni.Core;
 
 namespace Jabroni.World;
@@ -30,6 +31,8 @@ public partial class ClickToMove : Node3D
         _avatarAi = GetNode<AvatarAgentAI>("Avatar/AgentAI");
         _camera = GetNode<Camera3D>("CameraRig/PitchPivot/Camera3D");
         _destinationCursorScene = GD.Load<PackedScene>(DestinationCursorScenePath);
+
+        GetNode<OrbitCamera>("CameraRig").FollowTarget = _avatarAi.Body;
     }
 
     public override void _UnhandledInput(InputEvent @event)

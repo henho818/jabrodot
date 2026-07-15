@@ -216,6 +216,7 @@ transform = Transform3D(1, 0, 0, 0, 0.7933533, 0.6087614, 0, -0.6087614, 0.79335
 [node name="Camera3D" type="Camera3D" parent="CameraRig/PitchPivot" unique_id=66219597]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 40)
 current = true
+fov = 30.0
 
 [node name="Avatar" type="CharacterBody3D" parent="." unique_id=1892381067]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 21)
