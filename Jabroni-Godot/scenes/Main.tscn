@@ -13,6 +13,8 @@
 [ext_resource type="Script" path="res://scripts/AI/AgentVision.cs" id="13_vision"]
 [ext_resource type="Script" path="res://scripts/World/SurfaceLightController.cs" id="14_causticspivot"]
 [ext_resource type="PackedScene" path="res://scenes/UI/SettingsDebugOverlay.tscn" id="15_settingsoverlay"]
+[ext_resource type="Texture2D" path="res://art/village/grass.jpg" id="16_grass_tex"]
+[ext_resource type="Texture2D" path="res://art/village/brick.jpg" id="17_brick_tex"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -37,14 +39,14 @@ albedo_color = Color(0.25, 0.45, 0.22, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_unit"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_house"]
-albedo_color = Color(0.72, 0.56, 0.36, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_brick"]
+albedo_texture = ExtResource("17_brick_tex")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hedge"]
-albedo_color = Color(0.15, 0.35, 0.15, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_grass_hedge"]
+albedo_texture = ExtResource("16_grass_tex")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
-albedo_color = Color(0.55, 0.3, 0.25, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_roof"]
+albedo_color = Color(0.7725, 0.2024, 0.0, 1)
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_avatar"]
 radius = 0.4
@@ -124,116 +126,186 @@ surface_material_override/0 = SubResource("StandardMaterial3D_ground")
 transform = Transform3D(100, 0, 0, 0, 0.2, 0, 0, 0, 100, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="House1" type="StaticBody3D" parent="Village" unique_id=401809209]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 2, -15)
+[node name="HouseBody" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -16)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/House1" unique_id=1491928571]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/HouseBody"]
+transform = Transform3D(10, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_house")
+surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/House1" unique_id=495184967]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/HouseBody"]
+transform = Transform3D(10, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="House2" type="StaticBody3D" parent="Village" unique_id=1333046180]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 2, -15)
+[node name="RoofBrim" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 3.6, -16)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/House2" unique_id=815616409]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/RoofBrim"]
+transform = Transform3D(12, 0, 0, 0, 0.5, 0, 0, 0, 6, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_house")
+surface_material_override/0 = SubResource("StandardMaterial3D_roof")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/House2" unique_id=1707841211]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/RoofBrim"]
+transform = Transform3D(12, 0, 0, 0, 0.5, 0, 0, 0, 6, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="House3" type="StaticBody3D" parent="Village" unique_id=438003060]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 2, 15)
+[node name="RoofTop" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 4.13, -16)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/House3" unique_id=1244269786]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/RoofTop"]
+transform = Transform3D(10.1, 0, 0, 0, 1, 0, 0, 0, 4.1, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_house")
+surface_material_override/0 = SubResource("StandardMaterial3D_roof")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/House3" unique_id=2050672080]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/RoofTop"]
+transform = Transform3D(10.1, 0, 0, 0, 1, 0, 0, 0, 4.1, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="House4" type="StaticBody3D" parent="Village" unique_id=1823832041]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 2, 15)
+[node name="BrickWall" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.31, -0.5, -22)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/House4" unique_id=1176876214]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/BrickWall"]
+transform = Transform3D(3, 0, 0, 0, 8, 0, 0, 0, 10, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_house")
+surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/House4" unique_id=1737798413]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall"]
+transform = Transform3D(3, 0, 0, 0, 8, 0, 0, 0, 10, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge1" type="StaticBody3D" parent="Village" unique_id=1826569627]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.5, 12)
+[node name="WallSegment2" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.16, 0.08, -13.26)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge1" unique_id=34541122]
-transform = Transform3D(0.6, 0, 0, 0, 1, 0, 0, 0, 14, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/WallSegment2"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_hedge")
+surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge1" unique_id=1663186092]
-transform = Transform3D(0.6, 0, 0, 0, 1, 0, 0, 0, 14, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/WallSegment2"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge2" type="StaticBody3D" parent="Village" unique_id=386964790]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, 12)
+[node name="Hedge1" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge2" unique_id=1112574055]
-transform = Transform3D(0.6, 0, 0, 0, 1, 0, 0, 0, 14, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge1"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_hedge")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge2" unique_id=530937690]
-transform = Transform3D(0.6, 0, 0, 0, 1, 0, 0, 0, 14, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge1"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Wall1" type="StaticBody3D" parent="Village" unique_id=421578718]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -15)
+[node name="Hedge2" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.63, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Wall1" unique_id=1415380444]
-transform = Transform3D(26, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge2"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_wall")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Wall1" unique_id=775752985]
-transform = Transform3D(26, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge2"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Wall2" type="StaticBody3D" parent="Village" unique_id=2113112700]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 15)
+[node name="Hedge3" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.65, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Wall2" unique_id=1472428277]
-transform = Transform3D(26, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge3"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_wall")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Wall2" unique_id=1545245819]
-transform = Transform3D(26, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge3"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+shape = SubResource("BoxShape3D_unit")
+
+[node name="Hedge4" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14, 0.5, -27.03)
+collision_layer = 2
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge4"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge4"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+shape = SubResource("BoxShape3D_unit")
+
+[node name="Hedge5" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.14, 0.5, -27.03)
+collision_layer = 2
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge5"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge5"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+shape = SubResource("BoxShape3D_unit")
+
+[node name="Hedge6" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.11, 0.5, -27.03)
+collision_layer = 2
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge6"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge6"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+shape = SubResource("BoxShape3D_unit")
+
+[node name="Hedge7" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.87, 0.5, -27.03)
+collision_layer = 2
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge7"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge7"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+shape = SubResource("BoxShape3D_unit")
+
+[node name="Hedge8" type="StaticBody3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.86, 0.5, -27.03)
+collision_layer = 2
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge8"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge8"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=1488756027]
