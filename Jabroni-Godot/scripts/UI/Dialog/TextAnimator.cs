@@ -58,6 +58,11 @@ public partial class TextAnimator : RichTextLabel
         _font = GetThemeFont("normal_font");
         _fontSize = GetThemeFontSize("normal_font_size");
         _lineHeight = _font.GetHeight(_fontSize);
+
+        // Reserve this line's (fixed) row height immediately, at zero width, even before Play()
+        // is called -- lets DialogBox make a newly-revealed-but-not-yet-typing line's panel
+        // Visible to grow the dialog box's height first, then start typing once that settles.
+        CustomMinimumSize = new Vector2(0f, _lineHeight);
     }
 
     private static AudioStream[] LoadTypingSounds()

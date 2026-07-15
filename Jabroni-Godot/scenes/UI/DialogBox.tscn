@@ -8,15 +8,14 @@ anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("1_dialogbox")
 
+[node name="Portrait" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(96, 96)
+expand_mode = 1
+stretch_mode = 5
+
 [node name="Stack" type="VBoxContainer" parent="."]
 mouse_filter = 1
 theme_override_constants/separation = 8
-
-[node name="Portrait" type="TextureRect" parent="Stack"]
-custom_minimum_size = Vector2(96, 96)
-size_flags_horizontal = 4
-expand_mode = 1
-stretch_mode = 5
 
 [node name="Lines" type="VBoxContainer" parent="Stack"]
 size_flags_horizontal = 4
