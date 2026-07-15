@@ -29,6 +29,15 @@ public sealed class AITask_TriggerDialog : AITask
             DialogBox.Instance.Closed -= OnDialogClosed;
         }
 
+        // Clear the other party's chat target too (e.g. the avatar's), so its own FSM
+        // also leaves Chatting once this conversation ends -- otherwise only this
+        // agent's side would know the chat is over.
+        var other = Agent.ChatTarget?.GetNodeOrNull<AgentAI>("AgentAI");
+        if (other != null)
+        {
+            other.ChatTarget = null;
+        }
+
         Agent.ChatTarget = null;
     }
 

@@ -2,12 +2,12 @@
 
 [ext_resource type="Script" uid="uid://fwyuucln6lr1" path="res://scripts/CameraControl/OrbitCamera.cs" id="1_orbit"]
 [ext_resource type="Script" uid="uid://kyg3y0m58fsm" path="res://scripts/World/VillageNavigation.cs" id="2_nav"]
-[ext_resource type="Script" uid="uid://bqdwtw3xe5ew6" path="res://scripts/World/AvatarLocomotion.cs" id="3_avatar"]
-[ext_resource type="Script" uid="uid://cyr68mrr56ram" path="res://scripts/World/ClickToMove.cs" id="4_click"]
+[ext_resource type="Script" path="res://scripts/World/ClickToMove.cs" id="4_click"]
 [ext_resource type="PackedScene" path="res://scenes/UI/DialogBox.tscn" id="6_dialogbox"]
-[ext_resource type="Script" uid="uid://c27fvmmfb3xjk" path="res://scripts/World/NavMeshLocomotion.cs" id="7_navloco"]
-[ext_resource type="Script" uid="uid://ctpf7mq14pl0t" path="res://scripts/AI/NpcAgentAI.cs" id="8_npcai"]
-[ext_resource type="Script" uid="uid://clkg3l557tkga" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
+[ext_resource type="Script" path="res://scripts/World/NavMeshLocomotion.cs" id="7_navloco"]
+[ext_resource type="Script" path="res://scripts/AI/NpcAgentAI.cs" id="8_npcai"]
+[ext_resource type="Script" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
+[ext_resource type="Script" path="res://scripts/AI/AvatarAgentAI.cs" id="10_avatarai"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -221,7 +221,7 @@ current = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 21)
 collision_layer = 4
 collision_mask = 3
-script = ExtResource("3_avatar")
+script = ExtResource("7_navloco")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Avatar" unique_id=1249903463]
 mesh = SubResource("CapsuleMesh_avatar")
@@ -235,6 +235,16 @@ mesh = SubResource("BoxMesh_41buu")
 shape = SubResource("CapsuleShape3D_avatar")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="Avatar" unique_id=612729479]
+
+[node name="DebugStateLabel" type="Label3D" parent="Avatar"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+billboard = 1
+font_size = 48
+outline_size = 8
+text = "..."
+
+[node name="AgentAI" type="Node" parent="Avatar"]
+script = ExtResource("10_avatarai")
 
 [node name="NPC" type="CharacterBody3D" parent="." unique_id=73689340]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

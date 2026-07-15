@@ -7,5 +7,6 @@ public enum AIState
     Idle,
     Patrol,
     Alert,
+    NavToAgent,
     Chatting,
 }
