@@ -24,7 +24,20 @@ public partial class SubDialogLine : PanelContainer
         _fullText = text;
         NextDialogId = nextDialogId;
 
-        AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = background });
+        // Rounded corners + soft shadow stand in for the source project's 9-sliced
+        // Background.png sprite (not ported as a texture -- StyleBoxFlat gets the same look
+        // without needing to import/9-patch a raster asset).
+        var styleBox = new StyleBoxFlat
+        {
+            BgColor = background,
+            CornerRadiusTopLeft = 10,
+            CornerRadiusTopRight = 10,
+            CornerRadiusBottomLeft = 10,
+            CornerRadiusBottomRight = 10,
+            ShadowColor = new Color(0f, 0f, 0f, 0.25f),
+            ShadowSize = 6,
+        };
+        AddThemeStyleboxOverride("panel", styleBox);
         _textAnimator.AddThemeColorOverride("default_color", textColor);
         _textAnimator.SetPitch(typingPitchScale);
     }

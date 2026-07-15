@@ -28,6 +28,9 @@ public partial class DialogBox : Control
         "SubDialogID0", "SubDialogID1", "SubDialogID2", "SubDialogID3", "SubDialogID4", "SubDialogID5"
     };
 
+    private const float BottomMargin = 32f;
+
+    private VBoxContainer _stack;
     private VBoxContainer _lineContainer;
     private TextureRect _portrait;
     private Texture2D _avatarTexture;
@@ -37,11 +40,30 @@ public partial class DialogBox : Control
     public override void _Ready()
     {
         Instance = this;
-        _lineContainer = GetNode<VBoxContainer>("Panel/HBox/Lines");
-        _portrait = GetNode<TextureRect>("Panel/HBox/Portrait");
+        _stack = GetNode<VBoxContainer>("Stack");
+        _lineContainer = GetNode<VBoxContainer>("Stack/Lines");
+        _portrait = GetNode<TextureRect>("Stack/Portrait");
         _avatarTexture = GD.Load<Texture2D>(AvatarSheet.TexturePath);
         _lineScene = GD.Load<PackedScene>(SubDialogLineScenePath);
         Visible = false;
+    }
+
+    // The stack's content (avatar row + tightly-fit line boxes) changes size every frame while
+    // a TextAnimator is mid-reveal, so it's re-centered/bottom-anchored here rather than via
+    // static anchors -- mirrors the source project's box tweening to hug the growing text.
+    public override void _Process(double delta)
+    {
+        if (!Visible)
+        {
+            return;
+        }
+
+        Vector2 viewportSize = GetViewportRect().Size;
+        Vector2 stackSize = _stack.GetCombinedMinimumSize();
+        _stack.Size = stackSize;
+        _stack.Position = new Vector2(
+            (viewportSize.X - stackSize.X) / 2f,
+            viewportSize.Y - BottomMargin - stackSize.Y);
     }
 
     public void TriggerDialog(string dialogId)
