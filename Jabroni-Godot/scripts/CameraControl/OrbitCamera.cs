@@ -18,6 +18,7 @@ public partial class OrbitCamera : Node3D
     [Export] public float MinPitchDegrees { get; set; } = 20f;
     [Export] public float MaxPitchDegrees { get; set; } = 45f;
     [Export] public float ZoomStep { get; set; } = 4f;
+    [Export] public float ZoomDuration { get; set; } = 0.25f;
     [Export] public float OrbitSensitivity { get; set; } = 0.3f;
     [Export] public float FollowSmoothing { get; set; } = 6f;
 
@@ -27,13 +28,19 @@ public partial class OrbitCamera : Node3D
 
     private Node3D _pitchPivot;
     private Camera3D _camera;
-    private float _distance;
+
+    // _targetDistance is the clamped result of the latest scroll input; _displayedDistance is
+    // what's actually rendered, eased toward the target over ZoomDuration each time it changes
+    // (see AnimateZoomTo) instead of snapping per scroll tick.
+    private float _targetDistance;
+    private float _displayedDistance;
+    private Tween _zoomTween;
 
     public override void _Ready()
     {
         _pitchPivot = GetNode<Node3D>("PitchPivot");
         _camera = _pitchPivot.GetNode<Camera3D>("Camera3D");
-        _distance = (MinDistance + MaxDistance) * 0.5f;
+        _targetDistance = _displayedDistance = (MinDistance + MaxDistance) * 0.5f;
         ApplyDistance();
     }
 
@@ -47,17 +54,26 @@ public partial class OrbitCamera : Node3D
 
     public override void _Process(double delta)
     {
+        bool zoomChanged = false;
+
         if (Input.IsActionJustPressed(InputActions.CameraZoomIn))
         {
-            _distance -= ZoomStep;
+            _targetDistance -= ZoomStep;
+            zoomChanged = true;
         }
 
         if (Input.IsActionJustPressed(InputActions.CameraZoomOut))
         {
-            _distance += ZoomStep;
+            _targetDistance += ZoomStep;
+            zoomChanged = true;
         }
 
-        _distance = Mathf.Clamp(_distance, MinDistance, MaxDistance);
+        if (zoomChanged)
+        {
+            _targetDistance = Mathf.Clamp(_targetDistance, MinDistance, MaxDistance);
+            AnimateZoomTo(_targetDistance);
+        }
+
         ApplyDistance();
 
         if (FollowTarget != null)
@@ -67,11 +83,19 @@ public partial class OrbitCamera : Node3D
         }
     }
 
+    private void AnimateZoomTo(float target)
+    {
+        _zoomTween?.Kill();
+        _zoomTween = CreateTween();
+        _zoomTween.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+        _zoomTween.TweenMethod(Callable.From<float>(d => _displayedDistance = d), _displayedDistance, target, ZoomDuration);
+    }
+
     private void ApplyDistance()
     {
-        float t = Mathf.InverseLerp(MinDistance, MaxDistance, _distance);
+        float t = Mathf.InverseLerp(MinDistance, MaxDistance, _displayedDistance);
         float pitch = Mathf.Lerp(MinPitchDegrees, MaxPitchDegrees, t);
         _pitchPivot.RotationDegrees = new Vector3(-pitch, 0f, 0f);
-        _camera.Position = new Vector3(0f, 0f, _distance);
+        _camera.Position = new Vector3(0f, 0f, _displayedDistance);
     }
 }
