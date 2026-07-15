@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/AI/SharkAgentAI.cs" id="12_sharkai"]
 [ext_resource type="Script" path="res://scripts/AI/AgentVision.cs" id="13_vision"]
 [ext_resource type="Script" path="res://scripts/World/SurfaceLightController.cs" id="14_causticspivot"]
+[ext_resource type="PackedScene" path="res://scenes/UI/SettingsDebugOverlay.tscn" id="15_settingsoverlay"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -318,6 +319,9 @@ script = ExtResource("8_npcai")
 [node name="DialogBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
 layout_mode = 3
 anchors_preset = 15
+
+[node name="SettingsDebugOverlay" parent="UI" instance=ExtResource("15_settingsoverlay")]
+layout_mode = 3
 
 [node name="WaterZone" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 45)

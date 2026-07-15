@@ -19,13 +19,14 @@ public partial class SubDialogLine : PanelContainer
         _textAnimator = GetNode<TextAnimator>("Margin/Text");
     }
 
-    public void Setup(string text, Color background, Color textColor, string nextDialogId)
+    public void Setup(string text, Color background, Color textColor, string nextDialogId, float typingPitchScale)
     {
         _fullText = text;
         NextDialogId = nextDialogId;
 
         AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = background });
         _textAnimator.AddThemeColorOverride("default_color", textColor);
+        _textAnimator.SetPitch(typingPitchScale);
     }
 
     /// <summary>Starts the typewriter reveal, invoking onComplete once it finishes (or is skipped).</summary>

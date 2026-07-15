@@ -82,9 +82,15 @@ public partial class DialogBox : Control
             string localizedText = Tr(subDialogRow.GetString("LocalizationDialogID"));
             string next = subDialogRow.GetString("Next");
 
+            // Pitch is per-line authored data (source project fed it into a pitch-shifter mixer
+            // effect of unknown units). Treated here as semitones -- 0 = unshifted -- and
+            // converted to Godot's linear AudioStreamPlayer.PitchScale.
+            float pitchSemitones = subDialogRow.GetFloat("Pitch", 0f);
+            float pitchScale = Mathf.Pow(2f, pitchSemitones / 12f);
+
             var line = _lineScene.Instantiate<SubDialogLine>();
             _lineContainer.AddChild(line);
-            line.Setup(localizedText, bg, textColor, next);
+            line.Setup(localizedText, bg, textColor, next, pitchScale);
             line.Visible = false;
             line.AdvanceRequested += () => OnLineAdvanceRequested(line);
 

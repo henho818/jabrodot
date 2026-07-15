@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/UI/SettingsDebugOverlay.cs" id="1_overlay"]
+
+[node name="SettingsDebugOverlay" type="Control"]
+anchor_left = 0.0
+anchor_top = 0.0
+offset_left = 12.0
+offset_top = 12.0
+mouse_filter = 2
+script = ExtResource("1_overlay")
+
+[node name="Label" type="Label" parent="."]
+offset_right = 260.0
+offset_bottom = 80.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
