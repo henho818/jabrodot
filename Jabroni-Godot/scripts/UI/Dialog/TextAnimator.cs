@@ -9,6 +9,13 @@ namespace Jabroni.UI.Dialog;
 /// TextAnimator: CharsPerSecond 16.7, a sound every 2 chars, silence on whitespace). Reveal
 /// speed is scaled live by SettingsService.DialogPlaybackSpeedFactor so the speed hotkeys take
 /// effect mid-line, not just on the next line.
+///
+/// Sizing deliberately does NOT use RichTextLabel's own fit_content: that measures the full
+/// underlying Text regardless of VisibleCharacters, so the box would jump straight to its final
+/// width on frame one instead of growing with the reveal. Instead CustomMinimumSize is driven
+/// by hand every frame from a direct font measurement of just the revealed substring -- mirrors
+/// the source project's TMP box, which tracks only currently-visible glyph bounds for width
+/// while the (fixed, single-line) height is set once up front.
 /// </summary>
 public partial class TextAnimator : RichTextLabel
 {
@@ -30,6 +37,9 @@ public partial class TextAnimator : RichTextLabel
 
     private readonly RandomNumberGenerator _rng = new();
     private AudioStreamPlayer _typingPlayer;
+    private Font _font;
+    private int _fontSize;
+    private float _lineHeight;
 
     private float _charsRevealed;
     private int _totalChars;
@@ -44,6 +54,10 @@ public partial class TextAnimator : RichTextLabel
 
         _typingPlayer = new AudioStreamPlayer { Bus = "Dialog" };
         AddChild(_typingPlayer);
+
+        _font = GetThemeFont("normal_font");
+        _fontSize = GetThemeFontSize("normal_font_size");
+        _lineHeight = _font.GetHeight(_fontSize);
     }
 
     private static AudioStream[] LoadTypingSounds()
@@ -71,6 +85,7 @@ public partial class TextAnimator : RichTextLabel
         _charsRevealed = 0f;
         _charsSincePlayedSound = 0;
         _isAnimating = _totalChars > 0;
+        UpdateRevealedSize(0);
 
         if (!_isAnimating)
         {
@@ -87,6 +102,7 @@ public partial class TextAnimator : RichTextLabel
 
         VisibleCharacters = -1;
         _isAnimating = false;
+        UpdateRevealedSize(_totalChars);
         EmitSignal(SignalName.AnimationCompleted);
     }
 
@@ -103,6 +119,7 @@ public partial class TextAnimator : RichTextLabel
         _charsRevealed += BaseCharsPerSecond * speedFactor * (float)delta;
         int shown = Mathf.Min((int)_charsRevealed, _totalChars);
         VisibleCharacters = shown;
+        UpdateRevealedSize(shown);
 
         if (shown > previouslyShown)
         {
@@ -118,6 +135,15 @@ public partial class TextAnimator : RichTextLabel
             _isAnimating = false;
             EmitSignal(SignalName.AnimationCompleted);
         }
+    }
+
+    private void UpdateRevealedSize(int shownChars)
+    {
+        string parsedText = GetParsedText();
+        int clamped = Mathf.Clamp(shownChars, 0, parsedText.Length);
+        string revealed = clamped > 0 ? parsedText.Substring(0, clamped) : string.Empty;
+        float width = _font.GetStringSize(revealed, HorizontalAlignment.Left, -1, _fontSize).X;
+        CustomMinimumSize = new Vector2(width, _lineHeight);
     }
 
     private void OnCharacterShown(char shownChar)
