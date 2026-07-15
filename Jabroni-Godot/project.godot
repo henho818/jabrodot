@@ -1,0 +1,31 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Jabroni Godot"
+config/description="Godot rewrite of the Jabroni Project prototype (Unity source kept as design reference)."
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameBootstrap="*res://scripts/Core/GameBootstrap.cs"
+
+[dotnet]
+
+project/assembly_name="JabroniGodot"
+
+[layer_names]
+
+3d_physics/layer_1="Pathable"
+3d_physics/layer_2="Obstacle"
+3d_physics/layer_3="Agent"
