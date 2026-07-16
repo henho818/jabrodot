@@ -7,8 +7,8 @@ data_*/
 mono_crash.*.json
 
 # C# build output (if using the .NET build)
-bin/
-obj/
+/Jabroni-Godot/bin/
+/Jabroni-Godot/obj/
 *.csproj.user
 
 # Import/export artifacts
