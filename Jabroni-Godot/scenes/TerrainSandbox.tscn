@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://uy8dwmt17fuf"]
+[ext_resource type="Texture2D" uid="uid://ddprscrpsofah" path="res://demo/assets/textures/ground037_alb_ht.png" id="1_albht"]
+[ext_resource type="Texture2D" uid="uid://c1ots7w6i0i1q" path="res://demo/assets/textures/ground037_nrm_rgh.png" id="2_nrmrgh"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+ambient_light_source = 3
+ambient_light_color = Color(0.55, 0.55, 0.55, 1)
+ambient_light_sky_contribution = 0.3
+
+[sub_resource type="Gradient" id="Gradient_1txmt"]
+offsets = PackedFloat32Array(0.2, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_0ff0m"]
+noise_type = 2
+frequency = 0.03
+cellular_jitter = 3.0
+cellular_return_type = 0
+domain_warp_enabled = true
+domain_warp_type = 1
+domain_warp_amplitude = 50.0
+domain_warp_fractal_type = 2
+domain_warp_fractal_lacunarity = 1.5
+domain_warp_fractal_gain = 1.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_5rshj"]
+noise = SubResource("FastNoiseLite_0ff0m")
+color_ramp = SubResource("Gradient_1txmt")
+seamless = true
+
+[sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_1txmt"]
+_shader_parameters = {
+&"bias_distance": null,
+&"blend_sharpness": null,
+&"depth_blur": null,
+&"enable_macro_variation": null,
+&"enable_projection": null,
+&"flat_terrain_normals": null,
+&"macro_variation1": null,
+&"macro_variation2": null,
+&"macro_variation_slope": null,
+&"mipmap_bias": null,
+&"noise1_angle": null,
+&"noise1_offset": null,
+&"noise1_scale": null,
+&"noise2_scale": null,
+&"noise_texture": SubResource("NoiseTexture2D_5rshj"),
+&"projection_threshold": null
+}
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ff0m"]
+transparency = 4
+cull_mode = 2
+vertex_color_use_as_albedo = true
+backlight_enabled = true
+backlight = Color(0.5, 0.5, 0.5, 1)
+distance_fade_mode = 1
+distance_fade_min_distance = 128.0
+distance_fade_max_distance = 96.0
+metadata/terrain3d_generated_material = true
+
+[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_5rshj"]
+generated_type = 1
+height_offset = 0.5
+material_override = SubResource("StandardMaterial3D_0ff0m")
+last_lod = 0
+last_shadow_lod = 0
+lod0_range = 128.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_ygyfi"]
+albedo_texture = ExtResource("1_albht")
+normal_texture = ExtResource("2_nrmrgh")
+
+[sub_resource type="Terrain3DAssets" id="Terrain3DAssets_qlfu1"]
+mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_5rshj")])
+texture_list = Array[Terrain3DTextureAsset]([SubResource("Terrain3DTextureAsset_ygyfi")])
+
+[node name="TerrainSandbox" type="Node3D" unique_id=410645259]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=78457435]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=421275085]
+transform = Transform3D(-0.866024, -0.433016, 0.250001, 0, 0.499998, 0.866026, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Terrain3D" type="Terrain3D" parent="." unique_id=1162696394]
+data_directory = "res://terrain_data/sandbox"
+material = SubResource("Terrain3DMaterial_1txmt")
+assets = SubResource("Terrain3DAssets_qlfu1")
+top_level = true
+metadata/_edit_lock_ = true

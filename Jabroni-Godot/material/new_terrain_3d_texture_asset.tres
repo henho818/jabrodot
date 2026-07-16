@@ -1,0 +1,9 @@
+[gd_resource type="Terrain3DTextureAsset" format=3 uid="uid://btuwcwmlwcaoh"]
+
+[ext_resource type="Texture2D" uid="uid://ddprscrpsofah" path="res://demo/assets/textures/ground037_alb_ht.png" id="1_dr0s1"]
+[ext_resource type="Texture2D" uid="uid://c1ots7w6i0i1q" path="res://demo/assets/textures/ground037_nrm_rgh.png" id="2_6bjwi"]
+
+[resource]
+name = "ground037_alb_ht"
+albedo_texture = ExtResource("1_dr0s1")
+normal_texture = ExtResource("2_6bjwi")
