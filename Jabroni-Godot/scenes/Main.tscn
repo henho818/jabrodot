@@ -2,19 +2,21 @@
 
 [ext_resource type="Script" uid="uid://fwyuucln6lr1" path="res://scripts/CameraControl/OrbitCamera.cs" id="1_orbit"]
 [ext_resource type="Script" uid="uid://kyg3y0m58fsm" path="res://scripts/World/VillageNavigation.cs" id="2_nav"]
-[ext_resource type="Script" path="res://scripts/World/ClickToMove.cs" id="4_click"]
+[ext_resource type="PackedScene" uid="uid://uy8dwmt17fuf" path="res://scenes/TerrainSandbox.tscn" id="3_cvmbd"]
+[ext_resource type="Script" uid="uid://cyr68mrr56ram" path="res://scripts/World/ClickToMove.cs" id="4_click"]
 [ext_resource type="PackedScene" path="res://scenes/UI/DialogBox.tscn" id="6_dialogbox"]
-[ext_resource type="Script" path="res://scripts/World/NavMeshLocomotion.cs" id="7_navloco"]
-[ext_resource type="Script" path="res://scripts/AI/NpcAgentAI.cs" id="8_npcai"]
-[ext_resource type="Script" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
-[ext_resource type="Script" path="res://scripts/AI/AvatarAgentAI.cs" id="10_avatarai"]
-[ext_resource type="Script" path="res://scripts/World/DirectTranslationLocomotion.cs" id="11_directloco"]
-[ext_resource type="Script" path="res://scripts/AI/SharkAgentAI.cs" id="12_sharkai"]
-[ext_resource type="Script" path="res://scripts/AI/AgentVision.cs" id="13_vision"]
-[ext_resource type="Script" path="res://scripts/World/SurfaceLightController.cs" id="14_causticspivot"]
+[ext_resource type="Script" uid="uid://c27fvmmfb3xjk" path="res://scripts/World/NavMeshLocomotion.cs" id="7_navloco"]
+[ext_resource type="Script" uid="uid://ctpf7mq14pl0t" path="res://scripts/AI/NpcAgentAI.cs" id="8_npcai"]
+[ext_resource type="Script" uid="uid://clkg3l557tkga" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
+[ext_resource type="Script" uid="uid://r8nlg8e7h64y" path="res://scripts/AI/AvatarAgentAI.cs" id="10_avatarai"]
+[ext_resource type="Script" uid="uid://ci220h6yooibv" path="res://scripts/World/DirectTranslationLocomotion.cs" id="11_directloco"]
+[ext_resource type="Script" uid="uid://ci5xu45k1w0hd" path="res://scripts/AI/SharkAgentAI.cs" id="12_sharkai"]
+[ext_resource type="Script" uid="uid://d3qcdnpc5rtnv" path="res://scripts/AI/AgentVision.cs" id="13_vision"]
+[ext_resource type="Script" uid="uid://b7uujmxb7kr11" path="res://scripts/World/SurfaceLightController.cs" id="14_causticspivot"]
 [ext_resource type="PackedScene" path="res://scenes/UI/SettingsDebugOverlay.tscn" id="15_settingsoverlay"]
-[ext_resource type="Texture2D" path="res://art/village/grass.jpg" id="16_grass_tex"]
-[ext_resource type="Texture2D" path="res://art/village/brick.jpg" id="17_brick_tex"]
+[ext_resource type="Texture2D" uid="uid://cqmlqe0bxinfy" path="res://art/village/grass.jpg" id="16_grass_tex"]
+[ext_resource type="Texture2D" uid="uid://hmo8kjs82r86" path="res://art/village/brick.jpg" id="17_brick_tex"]
+[ext_resource type="Script" uid="uid://jorv8kiq0iwn" path="res://scripts/Nav/PatrolPathGizmo.cs" id="18_patrolgizmo"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -39,14 +41,14 @@ albedo_color = Color(0.25, 0.45, 0.22, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_unit"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_roof"]
+albedo_color = Color(0.7725, 0.2024, 0, 1)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_brick"]
 albedo_texture = ExtResource("17_brick_tex")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_grass_hedge"]
 albedo_texture = ExtResource("16_grass_tex")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_roof"]
-albedo_color = Color(0.7725, 0.2024, 0.0, 1)
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_avatar"]
 radius = 0.4
@@ -115,7 +117,10 @@ shadow_enabled = true
 navigation_mesh = SubResource("NavigationMesh_village")
 script = ExtResource("2_nav")
 
+[node name="TerrainSandbox" parent="Village" unique_id=410645259 instance=ExtResource("3_cvmbd")]
+
 [node name="GroundBody" type="StaticBody3D" parent="Village" unique_id=1151561207]
+visible = false
 collision_mask = 0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Village/GroundBody" unique_id=52512842]
@@ -126,185 +131,177 @@ surface_material_override/0 = SubResource("StandardMaterial3D_ground")
 transform = Transform3D(100, 0, 0, 0, 0.2, 0, 0, 0, 100, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="HouseBody" type="StaticBody3D" parent="Village"]
+[node name="HouseBody" type="StaticBody3D" parent="Village" unique_id=1713044125]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -16)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/HouseBody"]
+[node name="RoofTop" type="StaticBody3D" parent="Village/HouseBody" unique_id=1354524910]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.13, 0)
+collision_layer = 2
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/HouseBody/RoofTop" unique_id=693951878]
+transform = Transform3D(10.1, 0, 0, 0, 1, 0, 0, 0, 4.1, 0, 0, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_roof")
+
+[node name="RoofBrim" type="StaticBody3D" parent="Village/HouseBody" unique_id=1159071027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+collision_layer = 2
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/HouseBody/RoofBrim" unique_id=8049671]
+transform = Transform3D(12, 0, 0, 0, 0.5, 0, 0, 0, 6, 0, 0, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_roof")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/HouseBody" unique_id=246888721]
 transform = Transform3D(10, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/HouseBody"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/HouseBody" unique_id=1044803186]
 transform = Transform3D(10, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="RoofBrim" type="StaticBody3D" parent="Village"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 3.6, -16)
-collision_layer = 2
-collision_mask = 0
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/RoofBrim"]
-transform = Transform3D(12, 0, 0, 0, 0.5, 0, 0, 0, 6, 0, 0, 0)
-mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_roof")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/RoofBrim"]
-transform = Transform3D(12, 0, 0, 0, 0.5, 0, 0, 0, 6, 0, 0, 0)
-shape = SubResource("BoxShape3D_unit")
-
-[node name="RoofTop" type="StaticBody3D" parent="Village"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 4.13, -16)
-collision_layer = 2
-collision_mask = 0
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/RoofTop"]
-transform = Transform3D(10.1, 0, 0, 0, 1, 0, 0, 0, 4.1, 0, 0, 0)
-mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_roof")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/RoofTop"]
-transform = Transform3D(10.1, 0, 0, 0, 1, 0, 0, 0, 4.1, 0, 0, 0)
-shape = SubResource("BoxShape3D_unit")
-
-[node name="BrickWall" type="StaticBody3D" parent="Village"]
+[node name="BrickWall" type="StaticBody3D" parent="Village" unique_id=1209867123]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.31, -0.5, -22)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/BrickWall"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/BrickWall" unique_id=161600643]
 transform = Transform3D(3, 0, 0, 0, 8, 0, 0, 0, 10, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall" unique_id=217627374]
 transform = Transform3D(3, 0, 0, 0, 8, 0, 0, 0, 10, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="WallSegment2" type="StaticBody3D" parent="Village"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.16, 0.08, -13.26)
+[node name="WallSegment2" type="StaticBody3D" parent="Village" unique_id=1522575272]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.16, 0.30292135, -13.26)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/WallSegment2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/WallSegment2" unique_id=103565011]
 transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/WallSegment2"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/WallSegment2" unique_id=1625129456]
 transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge1" type="StaticBody3D" parent="Village"]
+[node name="Hedge1" type="StaticBody3D" parent="Village" unique_id=774639917]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge1"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge1" unique_id=1235844347]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge1"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge1" unique_id=425337195]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge2" type="StaticBody3D" parent="Village"]
+[node name="Hedge2" type="StaticBody3D" parent="Village" unique_id=2053316975]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.63, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge2" unique_id=456245279]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge2"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge2" unique_id=1904898261]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge3" type="StaticBody3D" parent="Village"]
+[node name="Hedge3" type="StaticBody3D" parent="Village" unique_id=1651661962]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.65, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge3"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge3" unique_id=49850089]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge3"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge3" unique_id=1430044778]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge4" type="StaticBody3D" parent="Village"]
+[node name="Hedge4" type="StaticBody3D" parent="Village" unique_id=1387166233]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge4"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge4" unique_id=1930068681]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge4"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge4" unique_id=26727687]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge5" type="StaticBody3D" parent="Village"]
+[node name="Hedge5" type="StaticBody3D" parent="Village" unique_id=538498575]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.14, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge5"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge5" unique_id=851270199]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge5"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge5" unique_id=1541626379]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge6" type="StaticBody3D" parent="Village"]
+[node name="Hedge6" type="StaticBody3D" parent="Village" unique_id=2127611232]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.11, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge6"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge6" unique_id=2129489842]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge6"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge6" unique_id=1888057648]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge7" type="StaticBody3D" parent="Village"]
+[node name="Hedge7" type="StaticBody3D" parent="Village" unique_id=2096958034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.87, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge7"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge7" unique_id=1765081146]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge7"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge7" unique_id=702285752]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
-[node name="Hedge8" type="StaticBody3D" parent="Village"]
+[node name="Hedge8" type="StaticBody3D" parent="Village" unique_id=1782628268]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.86, 0.5, -27.03)
 collision_layer = 2
 collision_mask = 0
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge8"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/Hedge8" unique_id=1506991190]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge8"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge8" unique_id=1325571090]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
@@ -338,18 +335,18 @@ shape = SubResource("CapsuleShape3D_avatar")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="Avatar" unique_id=612729479]
 
-[node name="DebugStateLabel" type="Label3D" parent="Avatar"]
+[node name="DebugStateLabel" type="Label3D" parent="Avatar" unique_id=1215211901]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 billboard = 1
+text = "..."
 font_size = 48
 outline_size = 8
-text = "..."
 
-[node name="AgentAI" type="Node" parent="Avatar"]
+[node name="AgentAI" type="Node" parent="Avatar" unique_id=497447170]
 script = ExtResource("10_avatarai")
 
 [node name="NPC" type="CharacterBody3D" parent="." unique_id=73689340]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, 0.9, -10.9519005)
 collision_layer = 4
 collision_mask = 3
 script = ExtResource("7_navloco")
@@ -386,67 +383,102 @@ outline_size = 8
 [node name="AgentAI" type="Node" parent="NPC" unique_id=1124203113]
 script = ExtResource("8_npcai")
 
+[node name="PatrolPath" type="Node3D" parent="NPC" unique_id=1591746689]
+script = ExtResource("18_patrolgizmo")
+
+[node name="Waypoint0" type="Marker3D" parent="NPC/PatrolPath" unique_id=2126891268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.730579, 0, 2.9519005)
+
+[node name="Waypoint1" type="Marker3D" parent="NPC/PatrolPath" unique_id=1389536718]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.73058, 0, 2.9519005)
+
+[node name="Waypoint2" type="Marker3D" parent="NPC/PatrolPath" unique_id=686950362]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.73058, 0, 18.9519)
+
+[node name="Waypoint3" type="Marker3D" parent="NPC/PatrolPath" unique_id=188747276]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.730579, 0, 18.9519)
+
 [node name="UI" type="CanvasLayer" parent="." unique_id=698920733]
 
 [node name="DialogBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
 layout_mode = 3
 anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="SettingsDebugOverlay" parent="UI" instance=ExtResource("15_settingsoverlay")]
+[node name="SettingsDebugOverlay" parent="UI" unique_id=444492259 instance=ExtResource("15_settingsoverlay")]
 layout_mode = 3
+anchors_preset = 0
+offset_left = 0.0
+offset_top = 0.0
 
-[node name="WaterZone" type="MeshInstance3D" parent="."]
+[node name="WaterZone" type="MeshInstance3D" parent="." unique_id=609705252]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 45)
 mesh = SubResource("PlaneMesh_water")
 surface_material_override/0 = SubResource("StandardMaterial3D_water")
 
-[node name="CausticsPivot" type="Node3D" parent="."]
+[node name="CausticsPivot" type="Node3D" parent="." unique_id=397606146]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 45)
 script = ExtResource("14_causticspivot")
 
-[node name="Light" type="OmniLight3D" parent="CausticsPivot"]
+[node name="Light" type="OmniLight3D" parent="CausticsPivot" unique_id=2107097639]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 0)
 light_color = Color(0.6, 0.85, 1, 1)
 light_energy = 1.5
 omni_range = 20.0
 
-[node name="Shark" type="CharacterBody3D" parent="."]
+[node name="Shark" type="CharacterBody3D" parent="." unique_id=1475299422]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, 35)
+visible = false
 collision_layer = 4
 collision_mask = 3
 script = ExtResource("11_directloco")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Shark"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Shark" unique_id=1321655324]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
 mesh = SubResource("CapsuleMesh_shark")
 surface_material_override/0 = SubResource("StandardMaterial3D_shark")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark" unique_id=1412596126]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
 shape = SubResource("CapsuleShape3D_shark")
 
-[node name="DetectionSphere" type="Area3D" parent="Shark"]
+[node name="DetectionSphere" type="Area3D" parent="Shark" unique_id=1973474699]
 collision_layer = 0
 collision_mask = 4
 script = ExtResource("9_detect")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark/DetectionSphere"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark/DetectionSphere" unique_id=366959605]
 shape = SubResource("SphereShape3D_shark_detect")
 
-[node name="Vision" type="Area3D" parent="Shark"]
+[node name="Vision" type="Area3D" parent="Shark" unique_id=424748836]
 collision_layer = 0
 collision_mask = 4
 script = ExtResource("13_vision")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark/Vision"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shark/Vision" unique_id=1561775146]
 shape = SubResource("SphereShape3D_shark_vision")
 
-[node name="DebugStateLabel" type="Label3D" parent="Shark"]
+[node name="DebugStateLabel" type="Label3D" parent="Shark" unique_id=954164389]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 billboard = 1
+text = "..."
 font_size = 48
 outline_size = 8
-text = "..."
 
-[node name="AgentAI" type="Node" parent="Shark"]
+[node name="AgentAI" type="Node" parent="Shark" unique_id=459439862]
 script = ExtResource("12_sharkai")
+
+[node name="PatrolPath" type="Node3D" parent="Shark" unique_id=2143348670]
+script = ExtResource("18_patrolgizmo")
+
+[node name="Waypoint0" type="Marker3D" parent="Shark/PatrolPath" unique_id=1992734110]
+
+[node name="Waypoint1" type="Marker3D" parent="Shark/PatrolPath" unique_id=1277401712]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, 0)
+
+[node name="Waypoint2" type="Marker3D" parent="Shark/PatrolPath" unique_id=2044267892]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, 20)
+
+[node name="Waypoint3" type="Marker3D" parent="Shark/PatrolPath" unique_id=1353992246]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)

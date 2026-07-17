@@ -25,9 +25,14 @@ public abstract partial class AgentAI : Node
 	public AIState CurrentState => _stateMachine?.CurrentState ?? AIState.None;
 
 	protected abstract string ConfigId { get; }
+	protected virtual double DefaultPatrolStayDuration => 1.5;
+	protected virtual bool SnapPatrolPathToTerrain => true;
+
+	private const int MaxPatrolPathBuildAttempts = 120; // ~2s at 60 physics ticks/sec; Terrain3D collision can take a few frames to come online
 
 	private AIStateMachine _stateMachine;
 	private Label3D _debugLabel;
+	private int _patrolPathBuildAttempts;
 
 	public override void _Ready()
 	{
@@ -52,6 +57,15 @@ public abstract partial class AgentAI : Node
 
 		_stateMachine = CreateStateMachine();
 		_stateMachine.Init();
+	}
+
+	public override void _PhysicsProcess(double delta)
+	{
+		if (PatrolPath == null && _patrolPathBuildAttempts < MaxPatrolPathBuildAttempts)
+		{
+			_patrolPathBuildAttempts++;
+			PatrolPath = PatrolPathBuilder.Build(Body, "PatrolPath", DefaultPatrolStayDuration, looping: true, SnapPatrolPathToTerrain);
+		}
 	}
 
 	public override void _Process(double delta)
