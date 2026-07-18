@@ -6,5 +6,5 @@ public sealed class AIStateCondition_HasPatrolPath : AICondition
     {
     }
 
-    public override bool Evaluate() => Agent.PatrolPath != null && Agent.PatrolPath.Nodes.Count > 0;
+    public override bool Evaluate() => Agent.PatrolPathReady && Agent.PatrolPath != null && Agent.PatrolPath.Nodes.Count > 0;
 }

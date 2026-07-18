@@ -77,6 +77,6 @@ public sealed class AITask_NavigatePath : AITask
 
     private void MoveToCurrentNode()
     {
-        Agent.Locomotion?.MoveTo(_path.Nodes[_nodeIndex].Position);
+        Agent.Locomotion?.MoveTo(_path.Nodes[_nodeIndex].WorldPosition);
     }
 }

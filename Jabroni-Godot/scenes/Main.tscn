@@ -16,7 +16,8 @@
 [ext_resource type="PackedScene" path="res://scenes/UI/SettingsDebugOverlay.tscn" id="15_settingsoverlay"]
 [ext_resource type="Texture2D" uid="uid://cqmlqe0bxinfy" path="res://art/village/grass.jpg" id="16_grass_tex"]
 [ext_resource type="Texture2D" uid="uid://hmo8kjs82r86" path="res://art/village/brick.jpg" id="17_brick_tex"]
-[ext_resource type="Script" uid="uid://jorv8kiq0iwn" path="res://scripts/Nav/PatrolPathGizmo.cs" id="18_patrolgizmo"]
+[ext_resource type="Script" uid="uid://canj0wvtg13wx" path="res://scripts/Nav/NavPath.cs" id="18_navpath"]
+[ext_resource type="Script" uid="uid://cg1npj8twlxqh" path="res://scripts/Nav/NavNode.cs" id="19_navnode"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -24,6 +25,7 @@ background_color = Color(0.55, 0.75, 0.95, 1)
 ambient_light_source = 2
 ambient_light_color = Color(1, 1, 1, 1)
 ambient_light_energy = 0.3
+ssao_enabled = true
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_village"]
 geometry_parsed_geometry_type = 1
@@ -46,6 +48,8 @@ albedo_color = Color(0.7725, 0.2024, 0, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_brick"]
 albedo_texture = ExtResource("17_brick_tex")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6dh4k"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_grass_hedge"]
 albedo_texture = ExtResource("16_grass_tex")
@@ -108,10 +112,6 @@ script = ExtResource("4_click")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1306933021]
 environment = SubResource("Environment_main")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1207363296]
-transform = Transform3D(0.8660254, 0.38302222, -0.32139382, 0, 0.64278764, 0.76604444, 0.5, -0.66341394, 0.5566704, 0, 0, 0)
-shadow_enabled = true
 
 [node name="Village" type="NavigationRegion3D" parent="." unique_id=1177332882]
 navigation_mesh = SubResource("NavigationMesh_village")
@@ -177,7 +177,8 @@ surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall" unique_id=217627374]
 transform = Transform3D(3, 0, 0, 0, 8, 0, 0, 0, 10, 0, 0, 0)
-shape = SubResource("BoxShape3D_unit")
+shape = SubResource("BoxShape3D_6dh4k")
+debug_color = Color(0, 0.60038817, 0.70000815, 0.312)
 
 [node name="WallSegment2" type="StaticBody3D" parent="Village" unique_id=1522575272]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.16, 0.30292135, -13.26)
@@ -305,6 +306,27 @@ surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
+[node name="PatrolPath" type="Node3D" parent="Village" unique_id=1591746689]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.73058, 0.9, -10.9519005)
+script = ExtResource("18_navpath")
+metadata/LineThickness = 0.1
+
+[node name="Waypoint0" type="Marker3D" parent="Village/PatrolPath" unique_id=2126891268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.730579, 0, 2.9519005)
+script = ExtResource("19_navnode")
+
+[node name="Waypoint1" type="Marker3D" parent="Village/PatrolPath" unique_id=1389536718]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.310215, 0.6522875, -15.600336)
+script = ExtResource("19_navnode")
+
+[node name="Waypoint2" type="Marker3D" parent="Village/PatrolPath" unique_id=686950362]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9109726, 0.92505836, -7.7657394)
+script = ExtResource("19_navnode")
+
+[node name="Waypoint3" type="Marker3D" parent="Village/PatrolPath" unique_id=188747276]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.404142, 2.1853886, 12.784525)
+script = ExtResource("19_navnode")
+
 [node name="CameraRig" type="Node3D" parent="." unique_id=1488756027]
 script = ExtResource("1_orbit")
 
@@ -351,6 +373,10 @@ collision_layer = 4
 collision_mask = 3
 script = ExtResource("7_navloco")
 
+[node name="AgentAI" type="Node" parent="NPC" unique_id=1124203113]
+script = ExtResource("8_npcai")
+metadata/PatrolPath = NodePath("../../Village/PatrolPath")
+
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NPC" unique_id=747798193]
 mesh = SubResource("CapsuleMesh_npc")
 surface_material_override/0 = SubResource("StandardMaterial3D_npc")
@@ -372,6 +398,7 @@ script = ExtResource("9_detect")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="NPC/DetectionSphere" unique_id=2066578395]
 shape = SubResource("SphereShape3D_detect")
+debug_color = Color(0, 0.60038817, 0.70000815, 0.324)
 
 [node name="DebugStateLabel" type="Label3D" parent="NPC" unique_id=1902563723]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
@@ -379,24 +406,6 @@ billboard = 1
 text = "..."
 font_size = 48
 outline_size = 8
-
-[node name="AgentAI" type="Node" parent="NPC" unique_id=1124203113]
-script = ExtResource("8_npcai")
-
-[node name="PatrolPath" type="Node3D" parent="NPC" unique_id=1591746689]
-script = ExtResource("18_patrolgizmo")
-
-[node name="Waypoint0" type="Marker3D" parent="NPC/PatrolPath" unique_id=2126891268]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.730579, 0, 2.9519005)
-
-[node name="Waypoint1" type="Marker3D" parent="NPC/PatrolPath" unique_id=1389536718]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.73058, 0, 2.9519005)
-
-[node name="Waypoint2" type="Marker3D" parent="NPC/PatrolPath" unique_id=686950362]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.73058, 0, 18.9519)
-
-[node name="Waypoint3" type="Marker3D" parent="NPC/PatrolPath" unique_id=188747276]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.730579, 0, 18.9519)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=698920733]
 
@@ -423,6 +432,7 @@ script = ExtResource("14_causticspivot")
 
 [node name="Light" type="OmniLight3D" parent="CausticsPivot" unique_id=2107097639]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 0)
+visible = false
 light_color = Color(0.6, 0.85, 1, 1)
 light_energy = 1.5
 omni_range = 20.0
@@ -468,17 +478,26 @@ outline_size = 8
 
 [node name="AgentAI" type="Node" parent="Shark" unique_id=459439862]
 script = ExtResource("12_sharkai")
+metadata/PatrolPath = NodePath("../PatrolPath")
 
 [node name="PatrolPath" type="Node3D" parent="Shark" unique_id=2143348670]
-script = ExtResource("18_patrolgizmo")
+script = ExtResource("18_navpath")
 
 [node name="Waypoint0" type="Marker3D" parent="Shark/PatrolPath" unique_id=1992734110]
+script = ExtResource("19_navnode")
+metadata/StayDuration = 1.0
 
 [node name="Waypoint1" type="Marker3D" parent="Shark/PatrolPath" unique_id=1277401712]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, 0)
+script = ExtResource("19_navnode")
+metadata/StayDuration = 1.0
 
 [node name="Waypoint2" type="Marker3D" parent="Shark/PatrolPath" unique_id=2044267892]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, 20)
+script = ExtResource("19_navnode")
+metadata/StayDuration = 1.0
 
 [node name="Waypoint3" type="Marker3D" parent="Shark/PatrolPath" unique_id=1353992246]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
+script = ExtResource("19_navnode")
+metadata/StayDuration = 1.0

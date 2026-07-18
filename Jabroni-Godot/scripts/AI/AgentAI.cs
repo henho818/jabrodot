@@ -15,7 +15,6 @@ public abstract partial class AgentAI : Node
 	public Node3D Body { get; private set; }
 	public IAgentMover Locomotion { get; private set; }
 	public AgentStats Stats { get; private set; }
-	public NavPath PatrolPath { get; set; }
 	public Node3D ChatTarget { get; set; }
 	public Vector3? DisturbancePosition { get; private set; }
 	public double LastDisturbanceTime { get; private set; } = double.NegativeInfinity;
@@ -25,14 +24,72 @@ public abstract partial class AgentAI : Node
 	public AIState CurrentState => _stateMachine?.CurrentState ?? AIState.None;
 
 	protected abstract string ConfigId { get; }
-	protected virtual double DefaultPatrolStayDuration => 1.5;
 	protected virtual bool SnapPatrolPathToTerrain => true;
 
-	private const int MaxPatrolPathBuildAttempts = 120; // ~2s at 60 physics ticks/sec; Terrain3D collision can take a few frames to come online
+	private const int MaxPatrolPathSnapAttempts = 120; // ~2s at 60 physics ticks/sec; Terrain3D collision can take a few frames to come online
+
+	private const string PatrolPathProperty = "PatrolPath";
 
 	private AIStateMachine _stateMachine;
 	private Label3D _debugLabel;
-	private int _patrolPathBuildAttempts;
+	private int _patrolPathSnapAttempts;
+
+	/// <summary>
+	/// The NavPath this agent patrols, dragged in directly in the Inspector -- no by-name
+	/// child lookup, no waiting for _Ready to resolve it. Stored as a NodePath in metadata
+	/// rather than an [Export] field: C# exported-property overrides (including Node
+	/// references) don't apply from .tscn in this Godot build, but metadata does -- see
+	/// ClickToMove's node-wiring comment for the verified platform bug. Resolved on demand
+	/// rather than cached, since the assignment can change while editing.
+	/// </summary>
+	public NavPath PatrolPath => HasMeta(PatrolPathProperty) ? GetNodeOrNull<NavPath>(GetMeta(PatrolPathProperty).AsNodePath()) : null;
+
+	/// <summary>True once PatrolPath's waypoints have been snapped to the terrain (or immediately, for agents that don't snap) -- see _PhysicsProcess.</summary>
+	public bool PatrolPathReady { get; private set; }
+
+	public override Godot.Collections.Array<Godot.Collections.Dictionary> _GetPropertyList()
+	{
+		return new Godot.Collections.Array<Godot.Collections.Dictionary>
+		{
+			new()
+			{
+				{ "name", PatrolPathProperty },
+				{ "type", (int)Variant.Type.Object },
+				{ "hint", (int)PropertyHint.NodeType },
+				{ "hint_string", nameof(NavPath) },
+				{ "usage", (int)PropertyUsageFlags.Editor },
+			},
+		};
+	}
+
+	public override Variant _Get(StringName property)
+	{
+		if (property == PatrolPathProperty)
+		{
+			return PatrolPath;
+		}
+
+		return default;
+	}
+
+	public override bool _Set(StringName property, Variant value)
+	{
+		if (property == PatrolPathProperty)
+		{
+			if (value.AsGodotObject() is Node node)
+			{
+				SetMeta(PatrolPathProperty, GetPathTo(node));
+			}
+			else
+			{
+				RemoveMeta(PatrolPathProperty);
+			}
+
+			return true;
+		}
+
+		return false;
+	}
 
 	public override void _Ready()
 	{
@@ -61,10 +118,14 @@ public abstract partial class AgentAI : Node
 
 	public override void _PhysicsProcess(double delta)
 	{
-		if (PatrolPath == null && _patrolPathBuildAttempts < MaxPatrolPathBuildAttempts)
+		if (!PatrolPathReady && PatrolPath != null && _patrolPathSnapAttempts < MaxPatrolPathSnapAttempts)
 		{
-			_patrolPathBuildAttempts++;
-			PatrolPath = PatrolPathBuilder.Build(Body, "PatrolPath", DefaultPatrolStayDuration, looping: true, SnapPatrolPathToTerrain);
+			_patrolPathSnapAttempts++;
+
+			if (!SnapPatrolPathToTerrain || NavPathTerrainSnapper.TrySnap(PatrolPath))
+			{
+				PatrolPathReady = true;
+			}
 		}
 	}
 
