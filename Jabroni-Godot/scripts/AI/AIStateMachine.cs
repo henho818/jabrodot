@@ -27,6 +27,9 @@ public abstract class AIStateMachine
         SetState(GetInitialState());
     }
 
+    /// <summary>Forces a transition regardless of the transition graph -- lets AgentAI.CurrentState's Inspector setter actually drive the agent, for testing state responses live.</summary>
+    public void ForceState(AIState state) => SetState(state);
+
     public void Update(double delta)
     {
         foreach (var transition in _transitions)
