@@ -4,3 +4,5 @@ S.TestThought	LD.Weather.Rain.02	NPC_thought	D.TestNarrator			2
 S.TestNarrator	LD.Weather.Rain.03	narrator	<end>			1
 S.OK_TestThought	LD.OK	NPC_speech	D.TestThought			2
 S.OK_TestNarrator	LD.OK	NPC_thought	D.TestNarrator			1
+S.MidWest_TestThought	LD.MidWest_Prompt	NPC_speech	D.MidWest_Response			2
+S.MidWest_Response	LD.MidWest_Answer	NPC_speech	<end>			3

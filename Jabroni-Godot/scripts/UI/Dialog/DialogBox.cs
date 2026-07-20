@@ -225,7 +225,8 @@ public partial class DialogBox : Control
         }
     }
 
-    private void Close()
+    /// <summary>Force-closes the dialog from outside (e.g. the chat partner walking out of range), same as clicking through to an `&lt;end&gt;` line.</summary>
+    public void Close()
     {
         Visible = false;
         ClearLines();

@@ -5,6 +5,8 @@ namespace Jabroni.AI;
 /// <summary>Opens the dialog box with the agent's configured dialog id and completes once it closes.</summary>
 public sealed class AITask_TriggerDialog : AITask
 {
+    private bool _dialogStarted;
+
     public AITask_TriggerDialog(AgentAI agent) : base(agent)
     {
     }
@@ -18,8 +20,26 @@ public sealed class AITask_TriggerDialog : AITask
             return;
         }
 
+        _dialogStarted = true;
         dialogBox.Closed += OnDialogClosed;
         dialogBox.TriggerDialog(Agent.Stats.ChatDialogId);
+    }
+
+    // Mirrors the same DetectionRadius that sizes this agent's DetectionSphere (see
+    // AgentAI._Ready) -- walking out of that sphere cancels the chat the same way it would
+    // drop any other disturbance/vision detection.
+    public override void Update(double delta)
+    {
+        if (!_dialogStarted || Agent.ChatTarget == null)
+        {
+            return;
+        }
+
+        float distance = Agent.Body.GlobalPosition.DistanceTo(Agent.ChatTarget.GlobalPosition);
+        if (distance > Agent.Stats.DetectionRadius)
+        {
+            DialogBox.Instance?.Close();
+        }
     }
 
     public override void End()

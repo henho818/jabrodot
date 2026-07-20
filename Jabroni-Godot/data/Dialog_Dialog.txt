@@ -1,4 +1,5 @@
 DialogID	AvatarSheet	AvatarIndex	SubDialogID0	SubDialogID1	SubDialogID2	SubDialogID3	SubDialogID4	SubDialogID5
-D.TestSpeech	avatars.png	5	S.TestSpeech	S.OK_TestThought
+D.TestSpeech	avatars.png	5	S.TestSpeech	S.OK_TestThought	S.MidWest_TestThought
 D.TestThought	avatars.png	6	S.TestThought
 D.TestNarrator			S.TestNarrator
+D.MidWest_Response	avatars.png	6	S.MidWest_Response
