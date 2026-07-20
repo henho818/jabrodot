@@ -4,7 +4,7 @@ using Jabroni.Core;
 namespace Jabroni.Nav;
 
 /// <summary>
-/// Snaps each NavNode child of a NavPath to the nearest Pathable surface via a vertical
+/// Snaps each NavNode referenced by a NavPath's Nodes array to the nearest Pathable surface via a vertical
 /// raycast, in place -- so waypoints can be authored loosely (under the terrain, floating
 /// above it) without matching its exact height, useful since the terrain is still subject
 /// to change. Terrain3D collision isn't guaranteed to be queryable on the first physics

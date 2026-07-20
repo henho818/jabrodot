@@ -39,7 +39,7 @@ public partial class SettingsService : Node
     public float SfxVolume { get; private set; } = 0.75f;
     public float DialogVolume { get; private set; } = 0.75f;
     public float DialogPlaybackSpeedFactor { get; private set; } = 1.0f;
-    public int FpsLimit { get; private set; } = 60;
+    public int FpsLimit { get; private set; } = 24;
 
     public override void _Ready()
     {

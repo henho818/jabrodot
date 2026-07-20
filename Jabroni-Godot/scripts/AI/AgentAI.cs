@@ -17,10 +17,15 @@ public abstract partial class AgentAI : Node
 	/// so a different NavPath can be dragged in while the agent is running, to test dynamic
 	/// path-switching -- see PatrolPathReady for forcing a re-snap after doing so.
 	/// </summary>
+	[ExportGroup("Patrol")]
 	[Export]
 	public NavPath PatrolPath { get; set; }
 
-	[ExportGroup("AI State")]
+	/// <summary>True once PatrolPath's waypoints have been snapped to the terrain (or immediately, for agents that don't snap) -- see _PhysicsProcess. Settable so a swapped PatrolPath can be forced to re-snap.</summary>
+	[Export]
+	public bool PatrolPathReady { get; set; }
+
+	[ExportGroup("References")]
 	[Export]
 	public Node3D Body { get; set; }
 
@@ -32,28 +37,15 @@ public abstract partial class AgentAI : Node
 		set => Locomotion = value as IAgentMover;
 	}
 
+	/// <summary>Read-only display; [Export] requires a setter, but there's nothing meaningful to write back onto Stats from a formatted string.</summary>
 	[Export]
 	public string StatsDisplay
 	{
 		get => FormatStats(Stats);
-		set { }
+		set => _ = value;
 	}
 
-	[Export]
-	public Node3D ChatTarget { get; set; }
-
-	[Export]
-	public Vector3 DisturbancePosition { get; set; }
-
-	[Export]
-	public double LastDisturbanceTime { get; set; } = double.NegativeInfinity;
-
-	[Export]
-	public Node3D AttackTarget { get; set; }
-
-	[Export]
-	public double LastTargetAcquiredTime { get; set; } = double.NegativeInfinity;
-
+	[ExportGroup("AI State")]
 	/// <summary>
 	/// Setting this from the Inspector actually drives the state machine (via
 	/// AIStateMachine.ForceState), not just a cosmetic value that gets overwritten next
@@ -69,10 +61,21 @@ public abstract partial class AgentAI : Node
 			_stateMachine?.ForceState(value);
 		}
 	}
-
-	/// <summary>True once PatrolPath's waypoints have been snapped to the terrain (or immediately, for agents that don't snap) -- see _PhysicsProcess. Settable so a swapped PatrolPath can be forced to re-snap.</summary>
+	
 	[Export]
-	public bool PatrolPathReady { get; set; }
+	public Node3D ChatTarget { get; set; }
+
+	[Export]
+	public Vector3 DisturbancePosition { get; set; }
+
+	[Export]
+	public double LastDisturbanceTime { get; set; } = double.NegativeInfinity;
+
+	[Export]
+	public Node3D AttackTarget { get; set; }
+
+	[Export]
+	public double LastTargetAcquiredTime { get; set; } = double.NegativeInfinity;
 
 	public IAgentMover Locomotion { get; private set; }
 	public AgentStats Stats { get; private set; }

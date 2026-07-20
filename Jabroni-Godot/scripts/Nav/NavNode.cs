@@ -7,7 +7,8 @@ namespace Jabroni.Nav;
 /// 3D viewport, reorder in the Scene tree). Position comes from the node itself; StayDuration
 /// is how long an agent waits here before moving to the next waypoint.
 /// </summary>
-public partial class NavNode : Node3D
+[Tool]
+public partial class NavNode : Marker3D
 {
 	/// <summary>
 	/// Snapped-to-terrain world position, set by NavPathTerrainSnapper. Distinct from the
