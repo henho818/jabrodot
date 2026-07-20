@@ -87,7 +87,7 @@ public partial class OrbitCamera : Node3D
     {
         _zoomTween?.Kill();
         _zoomTween = CreateTween();
-        _zoomTween.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+        _zoomTween.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
         _zoomTween.TweenMethod(Callable.From<float>(d => _displayedDistance = d), _displayedDistance, target, ZoomDuration);
     }
 

@@ -23,6 +23,7 @@ public partial class AgentVision : Area3D
     public void Initialize(AgentAI owner, float radius)
     {
         _owner = owner;
+        _shape ??= GetNode<CollisionShape3D>("CollisionShape3D");
 
         var sphere = _shape.Shape is SphereShape3D existing
             ? (SphereShape3D)existing.Duplicate()
