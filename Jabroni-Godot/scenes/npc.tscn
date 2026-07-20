@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://55lsmv728esb"]
+
+[ext_resource type="Script" uid="uid://c27fvmmfb3xjk" path="res://scripts/World/NavMeshLocomotion.cs" id="1_rv78h"]
+[ext_resource type="Script" uid="uid://ctpf7mq14pl0t" path="res://scripts/AI/NpcAgentAI.cs" id="2_7n8xq"]
+[ext_resource type="Script" uid="uid://clkg3l557tkga" path="res://scripts/AI/AgentDetectionSphere.cs" id="3_4wlns"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_npc"]
+radius = 0.4
+height = 1.8
+radial_segments = 16
+rings = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_npc"]
+albedo_color = Color(0.85, 0.35, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8mft4"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detect"]
+radius = 8.0
+
+[node name="NPC" type="CharacterBody3D" unique_id=57840602]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_rv78h")
+
+[node name="AgentAI" type="Node" parent="." unique_id=2100165297 node_paths=PackedStringArray("Body", "LocomotionNode")]
+script = ExtResource("2_7n8xq")
+Body = NodePath("..")
+LocomotionNode = NodePath("..")
+metadata/PatrolPath = NodePath("../../PatrolPath")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=252819915]
+mesh = SubResource("CapsuleMesh_npc")
+surface_material_override/0 = SubResource("StandardMaterial3D_npc")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MeshInstance3D" unique_id=512422434]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.25, -0.25)
+mesh = SubResource("BoxMesh_8mft4")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1813255313]
+shape = SubResource("CapsuleShape3D_npc")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1497317439]
+radius = 0.4
+
+[node name="DetectionSphere" type="Area3D" parent="." unique_id=544996560]
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("3_4wlns")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionSphere" unique_id=1537965895]
+shape = SubResource("SphereShape3D_detect")
+debug_color = Color(0, 0.60038817, 0.70000815, 0.324)
+
+[node name="DebugStateLabel" type="Label3D" parent="." unique_id=1767883975]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+billboard = 1
+text = "..."
+font_size = 48
+outline_size = 8
