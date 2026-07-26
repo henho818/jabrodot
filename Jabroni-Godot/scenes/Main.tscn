@@ -23,7 +23,7 @@
 background_mode = 1
 background_color = Color(0.55, 0.75, 0.95, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.14421088, 0.12714574, 0.14290577, 1)
+ambient_light_color = Color(0.50291395, 0.4559899, 0.49341708, 1)
 ambient_light_energy = 0.3
 ssao_enabled = true
 
