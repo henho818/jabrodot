@@ -6,3 +6,6 @@ S.OK_TestThought	LD.OK	NPC_speech	D.TestThought			2
 S.OK_TestNarrator	LD.OK	NPC_thought	D.TestNarrator			1
 S.MidWest_TestThought	LD.MidWest_Prompt	NPC_speech	D.MidWest_Response			2
 S.MidWest_Response	LD.MidWest_Answer	NPC_speech	<end>			3
+S.IntroL1	LD.IntroL1	narrator	D.Intro2			2
+S.Intro2	LD.Intro2	NPC_speech	D.Intro3			2
+S.Intro3	LD.Intro3	NPC_speech	<end>			2

@@ -3,3 +3,6 @@ D.TestSpeech	avatars.png	5	S.TestSpeech	S.OK_TestThought	S.MidWest_TestThought
 D.TestThought	avatars.png	6	S.TestThought
 D.TestNarrator			S.TestNarrator
 D.MidWest_Response	avatars.png	6	S.MidWest_Response
+D.Intro			S.IntroL1
+D.Intro2			S.Intro2
+D.Intro3			S.Intro3
