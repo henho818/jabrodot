@@ -51,11 +51,15 @@ public sealed class DialogNode
     public bool HasPortrait => !string.IsNullOrEmpty(AvatarSheet);
 }
 
-/// <summary>An agent config that starts a conversation, i.e. a root of the graph.</summary>
+/// <summary>An agent placed in a scene that starts a conversation, i.e. a root of the graph.</summary>
 public sealed class DialogEntryPoint
 {
-    public string ConfigId { get; init; }
-    public string AgentName { get; init; } = "";
+    /// <summary>Stable id for the node that carries the ChatDialogId, e.g. "npc.tscn:AgentAI".</summary>
+    public string SourceId { get; init; }
+
+    /// <summary>How to describe that node to the author, e.g. "NPC in npc.tscn".</summary>
+    public string Description { get; init; } = "";
+
     public string DialogId { get; init; }
 }
 
@@ -80,26 +84,28 @@ public sealed class DialogGraph
     /// <summary>Localization keys mapped to their per-locale text, for missing/blank checks.</summary>
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Localization { get; private init; }
 
-    /// <summary>Reads the tables from disk. Used by the game and by a fresh editor session.</summary>
+    /// <summary>Reads the tables from disk and the entry points from the scenes.</summary>
     public static DialogGraph Load()
     {
         return Build(
             TsvDocument.Load(DataPaths.Dialog),
             TsvDocument.Load(DataPaths.SubDialog),
             TsvDocument.Load(DataPaths.SubDialogStyle),
-            TsvDocument.Load(DataPaths.AgentConfig),
+            DialogEntryPointScanner.Scan(),
             TsvDocument.Load(DataPaths.Localization));
     }
 
     /// <summary>
     /// Derives the graph from already-loaded documents. The editor rebuilds after every edit, so
     /// it needs to see unsaved changes -- which means reading the in-memory rows, not the files.
+    /// Entry points come in already scanned, because they live in the scenes rather than in a
+    /// table these edits can touch, so rescanning on every keystroke would be wasted work.
     /// </summary>
     public static DialogGraph Build(
         TsvDocument dialogDocument,
         TsvDocument subDialogDocument,
         TsvDocument styleDocument,
-        TsvDocument agentDocument,
+        IReadOnlyList<DialogEntryPoint> entryPoints,
         TsvDocument localizationDocument)
     {
         var subDialogRows = new Dictionary<string, TsvRow>();
@@ -124,17 +130,6 @@ public sealed class DialogGraph
                 dialogs[row.Id] = BuildDialogNode(row.Id, row, subDialogRows, localization);
             }
         }
-
-        var entryPoints = agentDocument.Rows
-            .Select(row => new DialogEntryPoint
-            {
-                ConfigId = row.Id,
-                AgentName = row.GetString(DialogSchema.AgentNameColumn),
-                DialogId = row.GetString(DialogSchema.AgentDialogIdColumn),
-            })
-            .Where(entry => !string.IsNullOrEmpty(entry.DialogId))
-            .OrderBy(entry => entry.ConfigId)
-            .ToList();
 
         return new DialogGraph
         {
@@ -205,7 +200,7 @@ public sealed class DialogGraph
         return rawNext == DialogSchema.EndCommand ? DialogLinkKind.End : DialogLinkKind.Jump;
     }
 
-    /// <summary>Dialog ids reachable by following Next links out from the agent-config entry points.</summary>
+    /// <summary>Dialog ids reachable by following Next links out from the scenes' entry points.</summary>
     public HashSet<string> ReachableDialogIds()
     {
         var reached = new HashSet<string>();

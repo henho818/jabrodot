@@ -35,11 +35,11 @@ public static class DialogGraphMermaid
             return;
         }
 
-        builder.AppendLine("    %% entry points (Agent_Config.txt DialogId)");
+        builder.AppendLine("    %% entry points (AgentAI.ChatDialogId, per scene)");
         foreach (var entry in graph.EntryPoints)
         {
-            string agentLabel = string.IsNullOrEmpty(entry.AgentName) ? entry.ConfigId : entry.AgentName;
-            builder.AppendLine($"    {NodeId(entry.ConfigId)}([{Quote(agentLabel)}]) --> {NodeId(entry.DialogId)}");
+            string agentLabel = string.IsNullOrEmpty(entry.Description) ? entry.SourceId : entry.Description;
+            builder.AppendLine($"    {NodeId(entry.SourceId)}([{Quote(agentLabel)}]) --> {NodeId(entry.DialogId)}");
         }
 
         builder.AppendLine();
@@ -123,10 +123,13 @@ public static class DialogGraphMermaid
         return string.IsNullOrEmpty(line.PreviewText) ? line.SubDialogId : line.PreviewText;
     }
 
-    /// <summary>Mermaid node ids can't contain dots, which every id in these tables has.</summary>
+    /// <summary>
+    /// Mermaid node ids have to be bare words. Every id in these tables has a dot in it, and
+    /// entry-point ids also carry the scene file and node path separators.
+    /// </summary>
     private static string NodeId(string id)
     {
-        return id.Replace('.', '_').Replace('-', '_');
+        return new string(id.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
     }
 
     private static string Quote(string text)

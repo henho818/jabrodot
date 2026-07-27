@@ -42,7 +42,11 @@ public static class DialogSchema
     public const string ItemDependencyColumn = "ItemDependency";
     public const string PitchColumn = "Pitch";
 
-    // Agent_Config.txt -- the dialogue graph's entry points.
-    public const string AgentDialogIdColumn = "DialogId";
-    public const string AgentNameColumn = "Name";
+    /// <summary>
+    /// The AgentAI export that names the Dialog an agent opens -- the dialogue graph's entry
+    /// points. It lives on the node rather than in Agent_Config.txt so one agent scene can say
+    /// different things in different scenes, which is why DialogEntryPointScanner reads scenes
+    /// to find the graph's roots. Must match the property name on AgentAI.
+    /// </summary>
+    public const string ChatDialogIdProperty = "ChatDialogId";
 }

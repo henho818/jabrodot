@@ -4,13 +4,15 @@ namespace Jabroni.Editor;
 
 /// <summary>
 /// Adds the "Dialogue" dock, defaulting to the bottom slot because the graph view wants the full
-/// editor width. Plugin boilerplate only -- the validation and graph view live in
-/// DialogToolsPanel/DialogGraphView.
+/// editor width, and the Inspector editor for ChatDialogId. Plugin boilerplate only -- the
+/// validation and graph view live in DialogToolsPanel/DialogGraphView, and the Inspector field
+/// in DialogInspectorPlugin.
 /// </summary>
 [Tool]
 public partial class DialogToolsEditorPlugin : EditorPlugin
 {
     private EditorDock _dock;
+    private DialogInspectorPlugin _inspector;
 
     public override void _EnterTree()
     {
@@ -23,10 +25,16 @@ public partial class DialogToolsEditorPlugin : EditorPlugin
         _dock.AddChild(new DialogToolsPanel { Name = "DialogTools" });
 
         AddDock(_dock);
+
+        _inspector = new DialogInspectorPlugin();
+        AddInspectorPlugin(_inspector);
     }
 
     public override void _ExitTree()
     {
+        RemoveInspectorPlugin(_inspector);
+        _inspector = null;
+
         RemoveDock(_dock);
         _dock.QueueFree();
         _dock = null;

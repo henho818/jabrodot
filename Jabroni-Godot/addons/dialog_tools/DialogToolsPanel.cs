@@ -269,7 +269,7 @@ public partial class DialogToolsPanel : VBoxContainer
 
         foreach (var entry in _session.Graph.EntryPoints)
         {
-            _dialogIdBySubject.TryAdd(entry.ConfigId, entry.DialogId);
+            _dialogIdBySubject.TryAdd(entry.SourceId, entry.DialogId);
         }
     }
 

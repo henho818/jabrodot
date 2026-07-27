@@ -365,7 +365,7 @@ public partial class DialogGraphView : GraphEdit
         }
     }
 
-    // Column = how many jumps it takes to reach a Dialog from an agent config. Anything the BFS
+    // Column = how many jumps it takes to reach a Dialog from an agent in a scene. Anything the BFS
     // never reaches is parked in one extra column past the deepest reachable one, so orphaned
     // branches are visibly off to the side rather than tangled into the main flow.
     private static Dictionary<string, int> AssignDepths(DialogGraph graph)

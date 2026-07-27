@@ -21,7 +21,10 @@ public sealed class DialogDiagnostic
     /// <summary>Stable short code (e.g. "unknown-next") so findings can be grouped or filtered.</summary>
     public string Code { get; init; }
 
-    /// <summary>Which table row this is about, e.g. "D.TestSpeech" or "S.OK_TestThought".</summary>
+    /// <summary>
+    /// Which table row this is about, e.g. "D.TestSpeech" or "S.OK_TestThought" -- or, for an
+    /// entry-point finding, the scene node that names the Dialog, e.g. "npc.tscn:AgentAI".
+    /// </summary>
     public string Subject { get; init; }
 
     public string Message { get; init; }
@@ -65,9 +68,9 @@ public static class DialogGraphValidator
             {
                 Severity = DialogDiagnosticSeverity.Error,
                 Code = "unknown-entry-dialog",
-                Subject = entry.ConfigId,
-                Message = $"DialogId '{entry.DialogId}' has no row in Dialog_Dialog.txt -- "
-                          + $"talking to {Describe(entry.AgentName)} would open nothing.",
+                Subject = entry.SourceId,
+                Message = $"ChatDialogId '{entry.DialogId}' has no row in Dialog_Dialog.txt -- "
+                          + $"talking to {entry.Description} would open nothing.",
             });
         }
     }
@@ -259,13 +262,8 @@ public static class DialogGraphValidator
                 Severity = DialogDiagnosticSeverity.Warning,
                 Code = "unreachable-dialog",
                 Subject = dialogId,
-                Message = "No agent config starts here and no Next leads here -- unreachable in game.",
+                Message = "No agent's ChatDialogId starts here and no Next leads here -- unreachable in game.",
             });
         }
-    }
-
-    private static string Describe(string agentName)
-    {
-        return string.IsNullOrEmpty(agentName) ? "this agent" : agentName;
     }
 }

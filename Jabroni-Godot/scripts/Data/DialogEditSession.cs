@@ -56,15 +56,20 @@ public sealed class DialogEditSession
     public TsvDocument DialogDocument { get; private set; }
     public TsvDocument SubDialogDocument { get; private set; }
     public TsvDocument StyleDocument { get; private set; }
-    public TsvDocument AgentDocument { get; private set; }
     public TsvDocument LocalizationDocument { get; private set; }
+
+    /// <summary>
+    /// The graph's roots, read from the scenes on Reload. They aren't editable here -- moving a
+    /// Dialog onto a different agent is a scene edit, done in the Inspector.
+    /// </summary>
+    public IReadOnlyList<DialogEntryPoint> EntryPoints { get; private set; }
 
     /// <summary>Rebuilt after every mutation; never null.</summary>
     public DialogGraph Graph { get; private set; }
 
     public bool IsDirty => Documents.Any(document => document.IsDirty);
 
-    /// <summary>The tables this session may write. Styles and agent configs are read-only here.</summary>
+    /// <summary>The tables this session may write. Styles are read-only here.</summary>
     private IEnumerable<TsvDocument> Documents
     {
         get
@@ -82,14 +87,14 @@ public sealed class DialogEditSession
         return session;
     }
 
-    /// <summary>Re-reads every table from disk, discarding unsaved edits.</summary>
+    /// <summary>Re-reads every table from disk, rescans the scenes, and discards unsaved edits.</summary>
     public void Reload()
     {
         DialogDocument = TsvDocument.Load(DataPaths.Dialog);
         SubDialogDocument = TsvDocument.Load(DataPaths.SubDialog);
         StyleDocument = TsvDocument.Load(DataPaths.SubDialogStyle);
-        AgentDocument = TsvDocument.Load(DataPaths.AgentConfig);
         LocalizationDocument = TsvDocument.Load(DataPaths.Localization);
+        EntryPoints = DialogEntryPointScanner.Scan();
         RebuildGraph();
     }
 
@@ -117,7 +122,7 @@ public sealed class DialogEditSession
     private void RebuildGraph()
     {
         Graph = DialogGraph.Build(
-            DialogDocument, SubDialogDocument, StyleDocument, AgentDocument, LocalizationDocument);
+            DialogDocument, SubDialogDocument, StyleDocument, EntryPoints, LocalizationDocument);
     }
 
     public IReadOnlyList<string> StyleIds => StyleDocument.Rows.Select(row => row.Id).ToList();

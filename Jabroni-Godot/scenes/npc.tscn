@@ -31,6 +31,7 @@ script = ExtResource("1_rv78h")
 script = ExtResource("2_7n8xq")
 Body = NodePath("..")
 LocomotionNode = NodePath("..")
+ChatDialogId = "D.TestSpeech"
 metadata/PatrolPath = NodePath("../../PatrolPath")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=252819915]
