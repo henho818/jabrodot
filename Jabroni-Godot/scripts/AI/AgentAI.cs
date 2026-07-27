@@ -77,6 +77,16 @@ public abstract partial class AgentAI : Node
 	[Export]
 	public double LastTargetAcquiredTime { get; set; } = double.NegativeInfinity;
 
+	[ExportGroup("Dialogue")]
+	/// <summary>
+	/// The Dialog row this agent opens when it's chatted to. Set per scene rather than in
+	/// Agent_Config.txt, so the same agent scene can carry different lines depending on where
+	/// it's placed. Empty means the agent has nothing to say -- AITask_TriggerDialog then
+	/// completes immediately instead of opening a box.
+	/// </summary>
+	[Export]
+	public string ChatDialogId { get; set; } = "";
+
 	public IAgentMover Locomotion { get; private set; }
 	public AgentStats Stats { get; private set; }
 
@@ -94,7 +104,7 @@ public abstract partial class AgentAI : Node
 	{
 		return stats == null
 			? "(unset)"
-			: $"{stats.Name} | Speed={stats.BaseSpeed} AttackDist={stats.AttackDistance} AlertDisengage={stats.AlertDisengageTime} SearchDisengage={stats.SearchDisengageTime} DetectionRadius={stats.DetectionRadius} Dialog={stats.ChatDialogId}";
+			: $"{stats.Name} | Speed={stats.BaseSpeed} AttackDist={stats.AttackDistance} AlertDisengage={stats.AlertDisengageTime} SearchDisengage={stats.SearchDisengageTime} DetectionRadius={stats.DetectionRadius}";
 	}
 
 	public override void _Ready()

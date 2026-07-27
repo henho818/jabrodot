@@ -40,7 +40,14 @@
       "Bash(glxinfo)",
       "Bash(awk '/\\\\[node name=\"NPC\"/,0' scenes/Main.tscn)",
       "Bash(awk '/\\\\[node name=\"Shark\"/,0' scenes/Main.tscn)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(xargs ls -la)",
+      "Bash(git -C /run/media/henix/shared-hd/Projects/jabrodot/Jabroni-Godot mv addons/patrol_path_gizmo addons/nav_path_gizmo)",
+      "Bash(mv PatrolPathGizmoEditorPlugin.cs NavPathGizmoEditorPlugin.cs)",
+      "Bash(mv PatrolPathGizmoEditorPlugin.cs.uid NavPathGizmoEditorPlugin.cs.uid)",
+      "Bash(grep -v '\\\\.uid$')",
+      "Bash(/home/henix/godot/Godot_v4.7-stable_mono_linux_arm64/Godot_v4.7-stable_mono_linux.arm64 --headless --path . --script /tmp/claude-1000/-run-media-henix-shared-hd-Projects-jabrodot-Jabroni-Godot/eda0f02b-1297-46c2-96f9-3a79003887a5/scratchpad/test_navpath.gd)",
+      "Bash(python3 -)"
     ]
   }
 }

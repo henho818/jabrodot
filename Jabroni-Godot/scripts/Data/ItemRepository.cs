@@ -8,5 +8,5 @@ namespace Jabroni.Data;
 /// </summary>
 public partial class ItemRepository : TsvRepository
 {
-    protected override string DataFilePath => "res://data/Item_Item.txt";
+    protected override string DataFilePath => DataPaths.Item;
 }

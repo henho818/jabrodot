@@ -2,7 +2,7 @@ using Jabroni.UI.Dialog;
 
 namespace Jabroni.AI;
 
-/// <summary>Opens the dialog box with the agent's configured dialog id and completes once it closes.</summary>
+/// <summary>Opens the dialog box with the agent's per-scene ChatDialogId and completes once it closes.</summary>
 public sealed class AITask_TriggerDialog : AITask
 {
     private bool _dialogStarted;
@@ -14,7 +14,7 @@ public sealed class AITask_TriggerDialog : AITask
     public override void Start()
     {
         var dialogBox = DialogBox.Instance;
-        if (dialogBox == null || string.IsNullOrEmpty(Agent.Stats.ChatDialogId))
+        if (dialogBox == null || string.IsNullOrEmpty(Agent.ChatDialogId))
         {
             IsComplete = true;
             return;
@@ -22,7 +22,7 @@ public sealed class AITask_TriggerDialog : AITask
 
         _dialogStarted = true;
         dialogBox.Closed += OnDialogClosed;
-        dialogBox.TriggerDialog(Agent.Stats.ChatDialogId);
+        dialogBox.TriggerDialog(Agent.ChatDialogId);
     }
 
     // Mirrors the same DetectionRadius that sizes this agent's DetectionSphere (see

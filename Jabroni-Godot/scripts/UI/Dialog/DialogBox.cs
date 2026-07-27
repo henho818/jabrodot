@@ -21,13 +21,7 @@ public partial class DialogBox : Control
 
     public static DialogBox Instance { get; private set; }
 
-    private const string EndCommand = "<end>";
     private const string SubDialogLineScenePath = "res://scenes/UI/SubDialogLine.tscn";
-
-    private static readonly string[] SubDialogSlotColumns =
-    {
-        "SubDialogID0", "SubDialogID1", "SubDialogID2", "SubDialogID3", "SubDialogID4", "SubDialogID5"
-    };
 
     private const float BottomMargin = 32f;
     private const float PortraitGap = 8f;
@@ -130,8 +124,8 @@ public partial class DialogBox : Control
 
     private void UpdatePortrait(TsvRow dialogRow)
     {
-        string sheet = dialogRow.GetString("AvatarSheet");
-        int avatarIndex = dialogRow.GetInt("AvatarIndex", -1);
+        string sheet = dialogRow.GetString(DialogSchema.AvatarSheetColumn);
+        int avatarIndex = dialogRow.GetInt(DialogSchema.AvatarIndexColumn, -1);
         Rect2? cellRect = !string.IsNullOrEmpty(sheet) ? AvatarSheet.GetCellRect(avatarIndex) : null;
 
         if (cellRect == null)
@@ -149,7 +143,7 @@ public partial class DialogBox : Control
         var subDialogRepo = GetNode<SubDialogRepository>("/root/SubDialogRepository");
         var styleRepo = GetNode<SubDialogStyleRepository>("/root/SubDialogStyleRepository");
 
-        foreach (string column in SubDialogSlotColumns)
+        foreach (string column in DialogSchema.SubDialogSlotColumns)
         {
             string subDialogId = dialogRow.GetString(column);
             if (string.IsNullOrEmpty(subDialogId))
@@ -164,16 +158,16 @@ public partial class DialogBox : Control
                 continue;
             }
 
-            var styleRow = styleRepo.Get(subDialogRow.GetString("Style"));
+            var styleRow = styleRepo.Get(subDialogRow.GetString(DialogSchema.StyleColumn));
             Color bg = styleRow != null ? styleRow.GetColor("BgColor") : Colors.White;
             Color textColor = styleRow != null ? styleRow.GetColor("TextColor") : Colors.Black;
-            string localizedText = Tr(subDialogRow.GetString("LocalizationDialogID"));
-            string next = subDialogRow.GetString("Next");
+            string localizedText = Tr(subDialogRow.GetString(DialogSchema.LocalizationIdColumn));
+            string next = subDialogRow.GetString(DialogSchema.NextColumn);
 
             // Pitch is per-line authored data (source project fed it into a pitch-shifter mixer
             // effect of unknown units). Treated here as semitones -- 0 = unshifted -- and
             // converted to Godot's linear AudioStreamPlayer.PitchScale.
-            float pitchSemitones = subDialogRow.GetFloat("Pitch", 0f);
+            float pitchSemitones = subDialogRow.GetFloat(DialogSchema.PitchColumn, 0f);
             float pitchScale = Mathf.Pow(2f, pitchSemitones / 12f);
 
             var line = _lineScene.Instantiate<SubDialogLine>();
@@ -215,7 +209,7 @@ public partial class DialogBox : Control
     private void OnLineAdvanceRequested(SubDialogLine line)
     {
         string next = line.NextDialogId;
-        if (next == EndCommand)
+        if (next == DialogSchema.EndCommand)
         {
             Close();
         }

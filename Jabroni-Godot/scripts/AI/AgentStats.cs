@@ -13,12 +13,10 @@ public sealed class AgentStats
     public float AlertDisengageTime { get; }
     public float SearchDisengageTime { get; }
     public float DetectionRadius { get; }
-    public string ChatDialogId { get; }
 
     private AgentStats()
     {
         Name = "";
-        ChatDialogId = "";
     }
 
     public AgentStats(TsvRow row)
@@ -29,6 +27,5 @@ public sealed class AgentStats
         AlertDisengageTime = row.GetFloat("AlertDisengageTime");
         SearchDisengageTime = row.GetFloat("SearchDisengageTime");
         DetectionRadius = row.GetFloat("DetectionRadius");
-        ChatDialogId = row.GetString("DialogId");
     }
 }
