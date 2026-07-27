@@ -25,7 +25,13 @@ public partial class DialogBox : Control
 
     private const float BottomMargin = 32f;
     private const float PortraitGap = 8f;
-    private const float SlideDuration = 0.25f;
+
+    /// <summary>
+    /// How long the box takes to move vertically -- both the cascade slide onto a new line and
+    /// the ease onto a new row within one. 0 makes both snap.
+    /// </summary>
+    [Export(PropertyHint.Range, "0,1,0.01,or_greater")]
+    public float VerticalEaseDuration { get; set; } = 0.25f;
 
     private VBoxContainer _stack;
     private VBoxContainer _lineContainer;
@@ -34,11 +40,18 @@ public partial class DialogBox : Control
     private PackedScene _lineScene;
     private readonly List<SubDialogLine> _activeLines = new();
 
-    // The stack's top-edge Y, in screen space -- the single value that's smoothly slid rather
-    // than snapped whenever a new line's height gets reserved. Owned/updated by
-    // SnapStackTop()/SlideStackTopTo(), read every frame in _Process.
+    // The stack's top-edge Y, in screen space -- the single value that's smoothly moved rather
+    // than snapped whenever the box's height changes. Driven by UpdateTopEdge() each frame, or
+    // by SlideStackTopTo()'s tween while a cascade slide owns it.
     private float _displayedTopY;
     private Tween _slideTween;
+    private bool _sliding;
+
+    // Ease state for UpdateTopEdge: where the current move started, where it's going, and how
+    // far through it is.
+    private float _topFromY;
+    private float _topTargetY;
+    private float _topElapsed;
 
     public override void _Ready()
     {
@@ -51,10 +64,10 @@ public partial class DialogBox : Control
         Visible = false;
     }
 
-    // Width (and thus X-centering) changes every frame while a TextAnimator is mid-reveal, so
-    // that part is still recomputed live here. Height/Y is different: it only changes at the
-    // discrete moment a new line's row gets reserved, so it's driven by _displayedTopY (see
-    // SnapStackTop/SlideStackTopTo) instead of being recomputed from scratch every frame.
+    // Width (and thus X-centering) changes every frame while a TextAnimator is mid-reveal, so it
+    // is tracked live. Height steps a whole row at a time when a line wraps; rather than the box
+    // jumping upward to keep its bottom on the margin, the extra row is allowed to hang below it
+    // and UpdateTopEdge eases the top up to reclaim the slack.
     //
     // Portrait is positioned independently, centered on the viewport rather than on the
     // stack's own (currently changing) width -- putting it inside Stack and shrink-centering
@@ -72,6 +85,9 @@ public partial class DialogBox : Control
         Vector2 viewportSize = GetViewportRect().Size;
         Vector2 stackSize = _stack.GetCombinedMinimumSize();
         _stack.Size = stackSize;
+
+        UpdateTopEdge(viewportSize.Y - BottomMargin - stackSize.Y, delta);
+
         _stack.Position = new Vector2((viewportSize.X - stackSize.X) / 2f, _displayedTopY);
 
         if (_portrait.Visible)
@@ -88,20 +104,74 @@ public partial class DialogBox : Control
         return GetViewportRect().Size.Y - BottomMargin - _stack.GetCombinedMinimumSize().Y;
     }
 
+    /// <summary>
+    /// Eases the top edge onto a new resting place. Runs every frame but only animates when the
+    /// stack's height actually changed -- a line wrapping onto a new row. That's occasional
+    /// enough to afford easing in as well as out, unlike the width, which is re-targeted with
+    /// almost every character and so has to stay a pure ease-out (see TextAnimator).
+    /// </summary>
+    private void UpdateTopEdge(float targetTopY, double delta)
+    {
+        // A cascade slide owns _displayedTopY while it runs. Stay synced to it so that handing
+        // back doesn't look like a fresh change and re-animate what the tween just finished.
+        if (_sliding)
+        {
+            SnapTopEdgeState(targetTopY);
+            return;
+        }
+
+        if (!Mathf.IsEqualApprox(targetTopY, _topTargetY))
+        {
+            _topFromY = _displayedTopY;
+            _topTargetY = targetTopY;
+            _topElapsed = 0f;
+        }
+
+        if (VerticalEaseDuration <= 0f)
+        {
+            _displayedTopY = targetTopY;
+            return;
+        }
+
+        _topElapsed = Mathf.Min(_topElapsed + (float)delta, VerticalEaseDuration);
+
+        float progress = _topElapsed / VerticalEaseDuration;
+        float eased = progress * progress * (3f - (2f * progress)); // smoothstep: ease in and out
+
+        _displayedTopY = Mathf.Lerp(_topFromY, _topTargetY, eased);
+    }
+
+    /// <summary>Marks the ease as already finished at the given position, so nothing animates from it.</summary>
+    private void SnapTopEdgeState(float topY)
+    {
+        _topFromY = _displayedTopY;
+        _topTargetY = topY;
+        _topElapsed = VerticalEaseDuration;
+    }
+
     private void SnapStackTop()
     {
         _slideTween?.Kill();
+        _sliding = false;
         _displayedTopY = TargetTopY();
+        SnapTopEdgeState(_displayedTopY);
     }
 
     /// <summary>Slides the box (and portrait) up to fit a newly-reserved line, then invokes onComplete.</summary>
     private void SlideStackTopTo(Action onComplete)
     {
         _slideTween?.Kill();
+        _sliding = true;
         _slideTween = CreateTween();
         _slideTween.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-        _slideTween.TweenMethod(Callable.From<float>(y => _displayedTopY = y), _displayedTopY, TargetTopY(), SlideDuration);
-        _slideTween.TweenCallback(Callable.From(onComplete));
+        _slideTween.TweenMethod(Callable.From<float>(y => _displayedTopY = y), _displayedTopY, TargetTopY(), VerticalEaseDuration);
+        _slideTween.TweenCallback(Callable.From(() =>
+        {
+            // Hand _displayedTopY back to _Process before typing starts, so the line can grow the
+            // box upward as it wraps.
+            _sliding = false;
+            onComplete();
+        }));
     }
 
     public void TriggerDialog(string dialogId)
