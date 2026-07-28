@@ -41,9 +41,38 @@ public partial class ScrollableBox : Control
     [Export(PropertyHint.Range, "0,1,0.01,or_greater")]
     public float VerticalEaseDuration { get; set; } = 0.25f;
 
+    /// <summary>
+    /// How far a press has to travel vertically before it counts as a drag rather than a tap.
+    /// The whole budget for a finger that wobbles on the way down -- too small and taps start
+    /// scrolling the box instead of picking the line under them.
+    /// </summary>
+    [Export(PropertyHint.Range, "0,64,1,or_greater")]
+    public float DragDeadzone { get; set; } = 8f;
+
     private ScrollContainer _mask;
     private DialogBox _dialogBox;
     private TextureRect _portrait;
+
+    // Drag-to-scroll state. _dragCandidate spans the whole press; _dragging only turns on once
+    // the deadzone is beaten, and is what decides whether the release is a tap or a drag's end.
+    private bool _dragCandidate;
+    private bool _dragging;
+    private Vector2 _pressPosition;
+    private float _lastDragY;
+
+    // Scroll offset accumulated in float, so a slow drag isn't lost to rounding a sub-pixel
+    // delta to zero every event.
+    private float _dragScroll;
+
+    /// <summary>How far there is left to scroll, refreshed each frame for the drag handler.</summary>
+    private float _maxScroll;
+
+    /// <summary>
+    /// Set once the player takes the scrollbar over by hand. Suspends the follow-the-bottom pin
+    /// -- otherwise a line typing away underneath would drag the view straight back down --
+    /// until they scroll back to the bottom themselves, or a new dialog resets the box.
+    /// </summary>
+    private bool _userScrolled;
 
     // The eased "content bottom" described in the class summary, plus the ease's own state:
     // where the current move started, where it is going, and how far through it is.
@@ -93,13 +122,22 @@ public partial class ScrollableBox : Control
         _mask.Position = new Vector2((viewportSize.X - width) / 2f, topY);
         _mask.Size = new Vector2(width, height);
 
+        _maxScroll = Mathf.Max(0f, contentSize.Y - height);
+
+        // Scrolling back to the bottom by hand hands the pin back, the way a chat log re-follows
+        // once you return to the newest message.
+        if (_userScrolled && _mask.ScrollVertical >= _maxScroll - 1f)
+        {
+            _userScrolled = false;
+        }
+
         // Pin to the bottom only while the view is actually moving -- growing, easing, or
         // typing a line. Once it comes to rest the scrollbar is left alone, so the player can
         // read back up through a long dialog without it yanking itself back down every frame.
         bool viewMoving = !Mathf.IsEqualApprox(_displayedBottom, _lastDisplayedBottom)
             || !Mathf.IsEqualApprox(contentSize.Y, _lastContentHeight);
 
-        if (viewMoving)
+        if (viewMoving && !_userScrolled)
         {
             _mask.ScrollVertical = Mathf.RoundToInt(Mathf.Max(0f, _displayedBottom - height));
         }
@@ -114,6 +152,136 @@ public partial class ScrollableBox : Control
                 (viewportSize.X - portraitSize.X) / 2f,
                 topY - PortraitGap - portraitSize.Y);
         }
+    }
+
+    // Drag-to-scroll has to be read here rather than in _GuiInput, because by the time GUI input
+    // is dispatched a SubDialogLine (mouse_filter Stop) has already swallowed the press for
+    // itself and no ancestor sees it. _Input runs ahead of that dispatch, so the drag can be
+    // recognised without taking the press away from the line underneath it.
+    //
+    // What keeps taps working is that a line only acts on the *release*: a press is left to
+    // travel down the tree untouched, and only once the deadzone is beaten does this start
+    // eating events -- including the release that ends the drag, so the line under the finger
+    // doesn't read the end of a scroll as a choice. A press that never travels that far is
+    // never touched at all, and taps through exactly as before.
+    public override void _Input(InputEvent @event)
+    {
+        if (!_dialogBox.Visible)
+        {
+            return;
+        }
+
+        // Real touch events are swallowed inside the mask so ScrollContainer's own touch panning
+        // can't scroll the box a second time. The drag itself runs off the mouse events Godot
+        // emulates from that same touch (input_devices/pointing/emulate_mouse_from_touch, on by
+        // default), so finger and pointer share one code path instead of two that must agree.
+        if (@event is InputEventScreenTouch touch)
+        {
+            SwallowInsideMask(touch.Position);
+            return;
+        }
+
+        if (@event is InputEventScreenDrag screenDrag)
+        {
+            SwallowInsideMask(screenDrag.Position);
+            return;
+        }
+
+        if (@event is InputEventMouseButton button)
+        {
+            HandleButton(button);
+            return;
+        }
+
+        if (@event is InputEventMouseMotion motion && _dragCandidate)
+        {
+            HandleDragMotion(motion);
+        }
+    }
+
+    private void HandleButton(InputEventMouseButton button)
+    {
+        if (button.ButtonIndex is MouseButton.WheelUp or MouseButton.WheelDown)
+        {
+            // Left for ScrollContainer to actually scroll -- this only notes that the player has
+            // taken over, so the pin stops fighting the wheel.
+            if (IsInsideMask(button.Position))
+            {
+                _userScrolled = true;
+            }
+
+            return;
+        }
+
+        if (button.ButtonIndex != MouseButton.Left)
+        {
+            return;
+        }
+
+        if (button.Pressed)
+        {
+            // Nothing to drag when the content already fits, so every press is a tap.
+            _dragCandidate = _maxScroll > 0f && IsInsideMask(button.Position);
+            _dragging = false;
+            _pressPosition = button.Position;
+            _lastDragY = button.Position.Y;
+            _dragScroll = _mask.ScrollVertical;
+            return;
+        }
+
+        bool wasDragging = _dragging;
+        _dragCandidate = false;
+        _dragging = false;
+
+        if (wasDragging)
+        {
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    private void HandleDragMotion(InputEventMouseMotion motion)
+    {
+        float y = motion.Position.Y;
+
+        if (!_dragging)
+        {
+            // Only the Y travel counts, so a horizontal swipe across the lines stays a tap.
+            if (Mathf.Abs(y - _pressPosition.Y) <= DragDeadzone)
+            {
+                return;
+            }
+
+            // Measure from here, not from the press, so crossing the deadzone doesn't start the
+            // drag with a jump of the deadzone's own width.
+            _dragging = true;
+            _lastDragY = y;
+        }
+
+        _userScrolled = true;
+        _dragScroll = Mathf.Clamp(_dragScroll - (y - _lastDragY), 0f, _maxScroll);
+        _lastDragY = y;
+
+        _mask.ScrollVertical = Mathf.RoundToInt(_dragScroll);
+        GetViewport().SetInputAsHandled();
+    }
+
+    private void SwallowInsideMask(Vector2 position)
+    {
+        if (IsInsideMask(position))
+        {
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    /// <summary>
+    /// Whether a viewport-space pointer position is over the mask. Goes through the canvas
+    /// transform rather than comparing against GetGlobalRect() directly, so it still holds if the
+    /// UI's CanvasLayer is ever offset or scaled.
+    /// </summary>
+    private bool IsInsideMask(Vector2 viewportPosition)
+    {
+        Vector2 local = _mask.GetGlobalTransformWithCanvas().AffineInverse() * viewportPosition;
+        return new Rect2(Vector2.Zero, _mask.Size).HasPoint(local);
     }
 
     /// <summary>
@@ -188,6 +356,10 @@ public partial class ScrollableBox : Control
         _settling = false;
         _displayedBottom = _dialogBox.ContentSize.Y;
         SnapBottomState(_displayedBottom);
+
+        // A new dialog is a clean slate: whatever the player had scrolled to belonged to the
+        // lines that just got cleared out.
+        _userScrolled = false;
 
         // Force the first frame to pin to the bottom rather than read as "at rest".
         _lastDisplayedBottom = float.NaN;
