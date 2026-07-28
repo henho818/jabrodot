@@ -37,9 +37,9 @@ public partial class TextAnimator : RichTextLabel
     /// read (see <see cref="AdvanceReveal"/>), i.e. how early the box opens the next row before a
     /// glyph lands on it. 0 disables the easing and snaps.
     /// <para>
-    /// The vertical movement that follows a new row is DialogBox.VerticalEaseDuration's, not this
-    /// one -- so if the box should have finished sliding by the time the text arrives, this wants
-    /// to be at least that long.
+    /// The vertical movement that follows a new row is ScrollableBox.VerticalEaseDuration's, not
+    /// this one -- so if the box should have finished moving by the time the text arrives, this
+    /// wants to be at least that long.
     /// </para>
     /// </summary>
     [Export(PropertyHint.Range, "0,1,0.01,or_greater")]
@@ -305,9 +305,9 @@ public partial class TextAnimator : RichTextLabel
     // the box would sit permanently in its slowest, furthest-behind stretch.
     //
     // Height isn't eased here at all: it steps straight onto the new row, so the space is there
-    // the instant a glyph needs it and the box simply overhangs the bottom margin. DialogBox
-    // eases its top edge up to take that slack back, which is a rare enough event to afford a
-    // gentler curve than this one.
+    // the instant a glyph needs it. ScrollableBox is what eases onto that new height -- growing
+    // the box upward, or scrolling once it has hit its cap -- which is a rare enough event to
+    // afford a gentler curve than this one.
     private void EaseTowardTargetSize(double delta)
     {
         if (_displayedSize.IsEqualApprox(_targetSize))

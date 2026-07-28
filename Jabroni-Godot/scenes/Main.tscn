@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://kyg3y0m58fsm" path="res://scripts/World/VillageNavigation.cs" id="2_nav"]
 [ext_resource type="PackedScene" uid="uid://uy8dwmt17fuf" path="res://scenes/TerrainSandbox.tscn" id="3_cvmbd"]
 [ext_resource type="Script" uid="uid://cyr68mrr56ram" path="res://scripts/World/ClickToMove.cs" id="4_click"]
-[ext_resource type="PackedScene" path="res://scenes/UI/DialogBox.tscn" id="6_dialogbox"]
+[ext_resource type="PackedScene" path="res://scenes/UI/ScrollableBox.tscn" id="6_dialogbox"]
 [ext_resource type="Script" uid="uid://c27fvmmfb3xjk" path="res://scripts/World/NavMeshLocomotion.cs" id="7_navloco"]
 [ext_resource type="Script" uid="uid://clkg3l557tkga" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
 [ext_resource type="Script" uid="uid://r8nlg8e7h64y" path="res://scripts/AI/AvatarAgentAI.cs" id="10_avatarai"]
@@ -364,7 +364,7 @@ metadata/PatrolPath = NodePath("../../NPC-PatrolPath")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=698920733]
 
-[node name="DialogBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
+[node name="ScrollableBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
 layout_mode = 3
 anchors_preset = 15
 grow_horizontal = 2

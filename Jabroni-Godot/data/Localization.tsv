@@ -1,5 +1,5 @@
 key	en	zh	ja	es
-LD.Weather.Rain.01	It looks like it's going to rain today…	今天好像要下雨了。	今日は雨が降りそうです。	Parece que va a llover hoy.
+LD.Weather.Rain.01	It looks like it's going to rain today…It looks like it's going to rain today…It looks like it's going to rain today…It looks like it's going to rain today…It looks like it's going to rain today…	今天好像要下雨了。	今日は雨が降りそうです。	Parece que va a llover hoy.
 LD.Weather.Rain.02	I better bring an umbrella.	我最好带把伞。	傘を持ってきたほうがいい。	Mejor llevo un paraguas.
 LD.Weather.Rain.03	He decided to bring an umbrella after all.	毕竟他决定带一把雨伞。	彼は結局傘を持って行くことにした。	Decidió traer un paraguas después de todo.
 LD.OK	Okay.	好。	はい。	Bueno.
@@ -11,3 +11,6 @@ LD.IntroL1	The rain in the capital had a gray, industrial taste. From the dining
 LD.NewLine	No crowds, no firing squads; just a name removed from the registry and a gentleman escorted to a room he was no longer permitted to leave.
 LD.Intro2	No crowds, no firing squads; just a name removed from the registry and a gentleman escorted to a room he was no longer permitted to leave.
 LD.Intro3	A grand hotel makes an excellent cage if the bars are polished well enough.
+LD.TestScroll1	Hmm...
+LD.TestScroll2	Rain? Did you say rain?
+LD.TestScroll3	Rain or no rain, I'm going to need something to cover up. Maybe that newspaper will do the job? Hmm....
