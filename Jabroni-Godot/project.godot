@@ -26,6 +26,11 @@ ItemRepository="*res://scripts/Data/ItemRepository.cs"
 SettingsService="*res://scripts/Settings/SettingsService.cs"
 GameBootstrap="*res://scripts/Core/GameBootstrap.cs"
 
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1200
+
 [dotnet]
 
 project/assembly_name="JabroniGodot"
