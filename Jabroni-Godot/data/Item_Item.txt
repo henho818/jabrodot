@@ -1,2 +1,13 @@
 ItemId	Type	SubType	Name	Desc	Icon	Model	Value	SellValue
-copper1	stack		I.Copper1	I.Copper1Desc	copper1		1	1
+copper1	stack	currency	I.Copper1	I.Copper1Desc	copper1		1	1
+silver1	stack	currency	I.Silver1	I.Silver1Desc	silver1		10	10
+newspaper	stack	document	I.Newspaper	I.NewspaperDesc	newspaper		2	1
+matchbook	stack	tool	I.Matchbook	I.MatchbookDesc	matchbook		3	1
+coffee	stack	consumable	I.Coffee	I.CoffeeDesc	coffee		6	3
+breadroll	stack	consumable	I.BreadRoll	I.BreadRollDesc	breadroll		4	2
+bandage	stack	consumable	I.Bandage	I.BandageDesc	bandage		8	4
+umbrella	unique	tool	I.Umbrella	I.UmbrellaDesc	umbrella		25	12
+roomkey	unique	key	I.RoomKey	I.RoomKeyDesc	roomkey		0	0
+letter	unique	document	I.Letter	I.LetterDesc	letter		0	0
+trainticket	unique	document	I.TrainTicket	I.TrainTicketDesc	trainticket		30	0
+pocketwatch	unique	valuable	I.PocketWatch	I.PocketWatchDesc	pocketwatch		120	60
