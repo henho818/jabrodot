@@ -49,9 +49,22 @@ public partial class ScrollableBox : Control
     [Export(PropertyHint.Range, "0,64,1,or_greater")]
     public float DragDeadzone { get; set; } = 8f;
 
+    /// <summary>
+    /// How far above the box the invisible touch area reaches. It always spans the full viewport
+    /// width and runs to the bottom of the screen, so the misses this is really for -- a thumb
+    /// landing beside a narrow line, or in the margin below the box -- are covered regardless.
+    /// </summary>
+    [Export(PropertyHint.Range, "0,200,1,or_greater")]
+    public float TouchAreaMargin { get; set; } = 24f;
+
+    /// <summary>Tints the touch area so its extent can be seen while tuning it. Off in play.</summary>
+    [Export]
+    public bool ShowTouchArea { get; set; }
+
     private ScrollContainer _mask;
     private DialogBox _dialogBox;
     private TextureRect _portrait;
+    private Control _touchArea;
 
     // Drag-to-scroll state. _dragCandidate spans the whole press; _dragging only turns on once
     // the deadzone is beaten, and is what decides whether the release is a tap or a drag's end.
@@ -94,11 +107,13 @@ public partial class ScrollableBox : Control
         _mask = GetNode<ScrollContainer>("Mask");
         _dialogBox = GetNode<DialogBox>("Mask/DialogBox");
         _portrait = GetNode<TextureRect>("Portrait");
+        _touchArea = GetNode<Control>("TouchArea");
 
         _dialogBox.Host = this;
         _dialogBox.PortraitChanged += OnPortraitChanged;
 
         _portrait.Visible = false;
+        _touchArea.Visible = false;
     }
 
     public override void _Process(double delta)
@@ -106,6 +121,7 @@ public partial class ScrollableBox : Control
         if (!_dialogBox.Visible)
         {
             _portrait.Visible = false;
+            _touchArea.Visible = false;
             return;
         }
 
@@ -121,6 +137,20 @@ public partial class ScrollableBox : Control
 
         _mask.Position = new Vector2((viewportSize.X - width) / 2f, topY);
         _mask.Size = new Vector2(width, height);
+
+        // The mask is only as big as the text, which is a small target for a thumb -- and a press
+        // that lands beside it, or in the margin below it, reaches ClickToMove and walks the
+        // avatar off instead of scrolling. This is the catcher for those: it takes the press so
+        // nothing downstream sees it, and it is what the drag handler tests against, so a swipe
+        // starting next to the box scrolls it as readily as one starting on the text.
+        _touchArea.Visible = true;
+        _touchArea.Position = new Vector2(0f, Mathf.Max(0f, topY - TouchAreaMargin));
+        _touchArea.Size = new Vector2(viewportSize.X, viewportSize.Y - _touchArea.Position.Y);
+
+        if (ShowTouchArea)
+        {
+            QueueRedraw();
+        }
 
         _maxScroll = Mathf.Max(0f, contentSize.Y - height);
 
@@ -177,13 +207,13 @@ public partial class ScrollableBox : Control
         // default), so finger and pointer share one code path instead of two that must agree.
         if (@event is InputEventScreenTouch touch)
         {
-            SwallowInsideMask(touch.Position);
+            SwallowInsideTouchArea(touch.Position);
             return;
         }
 
         if (@event is InputEventScreenDrag screenDrag)
         {
-            SwallowInsideMask(screenDrag.Position);
+            SwallowInsideTouchArea(screenDrag.Position);
             return;
         }
 
@@ -205,7 +235,7 @@ public partial class ScrollableBox : Control
         {
             // Left for ScrollContainer to actually scroll -- this only notes that the player has
             // taken over, so the pin stops fighting the wheel.
-            if (IsInsideMask(button.Position))
+            if (IsInsideTouchArea(button.Position))
             {
                 _userScrolled = true;
             }
@@ -221,7 +251,7 @@ public partial class ScrollableBox : Control
         if (button.Pressed)
         {
             // Nothing to drag when the content already fits, so every press is a tap.
-            _dragCandidate = _maxScroll > 0f && IsInsideMask(button.Position);
+            _dragCandidate = _maxScroll > 0f && IsInsideTouchArea(button.Position);
             _dragging = false;
             _pressPosition = button.Position;
             _lastDragY = button.Position.Y;
@@ -265,23 +295,23 @@ public partial class ScrollableBox : Control
         GetViewport().SetInputAsHandled();
     }
 
-    private void SwallowInsideMask(Vector2 position)
+    private void SwallowInsideTouchArea(Vector2 position)
     {
-        if (IsInsideMask(position))
+        if (IsInsideTouchArea(position))
         {
             GetViewport().SetInputAsHandled();
         }
     }
 
     /// <summary>
-    /// Whether a viewport-space pointer position is over the mask. Goes through the canvas
+    /// Whether a viewport-space pointer position is over the touch area. Goes through the canvas
     /// transform rather than comparing against GetGlobalRect() directly, so it still holds if the
     /// UI's CanvasLayer is ever offset or scaled.
     /// </summary>
-    private bool IsInsideMask(Vector2 viewportPosition)
+    private bool IsInsideTouchArea(Vector2 viewportPosition)
     {
-        Vector2 local = _mask.GetGlobalTransformWithCanvas().AffineInverse() * viewportPosition;
-        return new Rect2(Vector2.Zero, _mask.Size).HasPoint(local);
+        Vector2 local = _touchArea.GetGlobalTransformWithCanvas().AffineInverse() * viewportPosition;
+        return new Rect2(Vector2.Zero, _touchArea.Size).HasPoint(local);
     }
 
     /// <summary>
@@ -394,5 +424,19 @@ public partial class ScrollableBox : Control
     {
         _portrait.Texture = texture;
         _portrait.Visible = texture != null;
+    }
+
+    /// <summary>
+    /// Paints the touch area when <see cref="ShowTouchArea"/> is on, so its extent can be seen
+    /// while tuning the margin. Drawn from here rather than by the TouchArea node itself, which
+    /// is a plain scriptless Control -- this node is anchored to the whole viewport, so its
+    /// child's Position/Size are already the rect to paint.
+    /// </summary>
+    public override void _Draw()
+    {
+        if (ShowTouchArea && _touchArea != null && _touchArea.Visible)
+        {
+            DrawRect(new Rect2(_touchArea.Position, _touchArea.Size), new Color(0f, 0.6f, 1f, 0.12f));
+        }
     }
 }
