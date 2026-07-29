@@ -36,6 +36,8 @@ LD.Intro3	A grand hotel makes an excellent cage if the bars are polished well en
 LD.TestScroll1	Hmm...
 LD.TestScroll2	Rain? Did you say rain?
 LD.TestScroll3	Rain or no rain, I'm going to need something to cover up. Maybe that newspaper will do the job? Hmm....
+LD.Charity	Hey, you look down on your luck. Here, take this.	嘿，你看上去挺落魄的。拿着这个吧。	おい、ずいぶん困っているようだな。これを持っていけ。	Oye, se te ve con mala suerte. Toma, quédatelo.
+LD.CharityAward	You received 1 copper.	你获得了 1 枚铜币。	銅貨を1枚手に入れた。	Has recibido 1 moneda de cobre.
 UI.Inventory.Title	Inventory	物品栏	持ち物	Inventario
 UI.Inventory.Close	Close	关闭	閉じる	Cerrar
 UI.Inventory.Empty	Your pockets are empty.	你的口袋空空如也。	ポケットは空だ。	Tus bolsillos están vacíos.

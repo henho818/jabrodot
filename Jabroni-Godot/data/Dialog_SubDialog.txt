@@ -12,3 +12,5 @@ S.Intro3	LD.Intro3	NPC_speech	<end>			2
 S.TestScroll1	LD.TestScroll1	NPC_speech	D.TestThought			2
 S.TestScroll2	LD.TestScroll2	NPC_speech	D.TestThought			2
 S.TestScroll3	LD.TestScroll3	NPC_speech	D.TestThought			2
+S.Charity	LD.Charity	NPC_speech	D.CharityAward			2
+S.CharityAward	LD.CharityAward	narrator	<end>	copper1		1

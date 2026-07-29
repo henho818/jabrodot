@@ -365,8 +365,8 @@ public partial class DialogToolsPanel : VBoxContainer
         }
     }
 
-    // Three independent writes; the first failure wins so the author sees the actual complaint
-    // rather than a later success overwriting it in the status line.
+    // Independent writes; the first failure wins so the author sees the actual complaint rather
+    // than a later success overwriting it in the status line.
     private void ApplyLineEdits(DialogFormResult result)
     {
         string subDialogId = result.EditingSubDialogId;
@@ -376,6 +376,8 @@ public partial class DialogToolsPanel : VBoxContainer
             _session.SetLineText(subDialogId, DialogSchema.PreviewLocale, result.Line.EnglishText),
             _session.SetLineStyle(subDialogId, result.Line.StyleId),
             _session.SetNext(subDialogId, result.Line.Next),
+            _session.SetLineItemAward(subDialogId, result.Line.ItemAward),
+            _session.SetLineItemDependency(subDialogId, result.Line.ItemDependency),
         };
 
         var failures = edits.Where(edit => !edit.Ok).ToList();
