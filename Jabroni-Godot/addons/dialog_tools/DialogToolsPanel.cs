@@ -207,10 +207,18 @@ public partial class DialogToolsPanel : VBoxContainer
     private void Apply(EditResult result)
     {
         SetStatus(result.Message, result.Ok ? OkColor : ErrorColor);
+
         if (result.Ok)
         {
             RefreshFromSession();
+            return;
         }
+
+        // The status label is the last thing on a crowded toolbar and clips its text, so a
+        // refusal shown only there is easy to miss -- the form closes, nothing changes, and it
+        // reads as the tool silently doing nothing. A warning also lands in Output and the
+        // Debugger's Errors/Warnings panel, where it keeps until the author goes looking.
+        GD.PushWarning($"Dialogue tools: {result.Message}");
     }
 
     private void UpdateButtonStates()
