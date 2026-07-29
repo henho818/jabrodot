@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://kyg3y0m58fsm" path="res://scripts/World/VillageNavigation.cs" id="2_nav"]
 [ext_resource type="PackedScene" uid="uid://uy8dwmt17fuf" path="res://scenes/TerrainSandbox.tscn" id="3_cvmbd"]
 [ext_resource type="Script" uid="uid://cyr68mrr56ram" path="res://scripts/World/ClickToMove.cs" id="4_click"]
-[ext_resource type="PackedScene" path="res://scenes/UI/DialogBox.tscn" id="6_dialogbox"]
+[ext_resource type="PackedScene" path="res://scenes/UI/ScrollableBox.tscn" id="6_dialogbox"]
 [ext_resource type="Script" uid="uid://c27fvmmfb3xjk" path="res://scripts/World/NavMeshLocomotion.cs" id="7_navloco"]
 [ext_resource type="Script" uid="uid://clkg3l557tkga" path="res://scripts/AI/AgentDetectionSphere.cs" id="9_detect"]
 [ext_resource type="Script" uid="uid://r8nlg8e7h64y" path="res://scripts/AI/AvatarAgentAI.cs" id="10_avatarai"]
@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://canj0wvtg13wx" path="res://scripts/Nav/NavPath.cs" id="18_navpath"]
 [ext_resource type="Script" uid="uid://cg1npj8twlxqh" path="res://scripts/Nav/NavNode.cs" id="19_navnode"]
 [ext_resource type="PackedScene" uid="uid://b1cybunvxcyli" path="res://scenes/narrator.tscn" id="19_nfivy"]
+[ext_resource type="PackedScene" path="res://scenes/UI/InventoryUI.tscn" id="20_inventoryui"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -364,7 +365,7 @@ metadata/PatrolPath = NodePath("../../NPC-PatrolPath")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=698920733]
 
-[node name="DialogBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
+[node name="ScrollableBox" parent="UI" unique_id=2102321398 instance=ExtResource("6_dialogbox")]
 layout_mode = 3
 anchors_preset = 15
 grow_horizontal = 2
@@ -375,6 +376,12 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = 0.0
 offset_top = 0.0
+
+[node name="InventoryUI" parent="UI" unique_id=2040480694 instance=ExtResource("20_inventoryui")]
+layout_mode = 3
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="WaterZone" type="MeshInstance3D" parent="." unique_id=609705252]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 45)
@@ -467,5 +474,37 @@ transform = Transform3D(-0.6306913, 0, 0.77603376, 0, 1, 0, -0.77603376, 0, -0.6
 [node name="AgentAI" parent="Narrator" index="0" unique_id=2100165297]
 ChatDialogId = "D.Intro"
 
+[node name="NPC2" parent="." unique_id=899351124 instance=ExtResource("11_bb450")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, 2.1956944, 11.836643)
+
+[node name="AgentAI" parent="NPC2" index="0" unique_id=2100165297 node_paths=PackedStringArray("PatrolPath")]
+PatrolPath = NodePath("../../NPC-PatrolPath")
+ChatDialogId = "D.Charity"
+metadata/PatrolPath = NodePath("../../NPC-PatrolPath")
+
+[node name="NPC-PatrolPath2" type="Node3D" parent="." unique_id=1547168980]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.73058, 0.9, 22.83878)
+script = ExtResource("18_navpath")
+NodePaths = Array[NodePath]([NodePath("Waypoint0"), NodePath("Waypoint1"), NodePath("Waypoint2"), NodePath("Waypoint3")])
+LineThickness = 0.2
+metadata/LineThickness = 0.1
+
+[node name="Waypoint0" type="Marker3D" parent="NPC-PatrolPath2" unique_id=1922202459]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8110895, 0.74279594, 2.9519005)
+script = ExtResource("19_navnode")
+
+[node name="Waypoint1" type="Marker3D" parent="NPC-PatrolPath2" unique_id=633434885]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.310215, 2.1524267, -10.930836)
+script = ExtResource("19_navnode")
+
+[node name="Waypoint2" type="Marker3D" parent="NPC-PatrolPath2" unique_id=526067480]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9109726, 0.92505836, -7.7657394)
+script = ExtResource("19_navnode")
+
+[node name="Waypoint3" type="Marker3D" parent="NPC-PatrolPath2" unique_id=1369111334]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2708664, 0.94843113, 7.4008446)
+script = ExtResource("19_navnode")
+
 [editable path="NPC"]
 [editable path="Narrator"]
+[editable path="NPC2"]

@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/UI/Dialog/ScrollableBox.cs" id="1_scrollablebox"]
+[ext_resource type="PackedScene" path="res://scenes/UI/DialogBox.tscn" id="2_dialogbox"]
+
+[node name="ScrollableBox" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_scrollablebox")
+
+[node name="Portrait" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(96, 96)
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Mask" type="ScrollContainer" parent="."]
+clip_contents = true
+horizontal_scroll_mode = 0
+follow_focus = false
+
+[node name="DialogBox" parent="Mask" instance=ExtResource("2_dialogbox")]
+layout_mode = 2

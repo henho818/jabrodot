@@ -1,0 +1,83 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/UI/Inventory/InventoryUI.cs" id="1_inventoryui"]
+[ext_resource type="Script" path="res://scripts/UI/Inventory/InventoryGrid.cs" id="2_inventorygrid"]
+
+[node name="InventoryUI" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_inventoryui")
+
+[node name="OpenButton" type="Button" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -156.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 62.0
+theme_override_font_sizes/font_size = 18
+text = "Inventory"
+
+[node name="Screen" type="Control" parent="."]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="Screen"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Center" type="CenterContainer" parent="Screen"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Screen/Center"]
+mouse_filter = 0
+
+[node name="Margin" type="MarginContainer" parent="Screen/Center/Panel"]
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="Layout" type="VBoxContainer" parent="Screen/Center/Panel/Margin"]
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="Screen/Center/Panel/Margin/Layout"]
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Screen/Center/Panel/Margin/Layout/Header"]
+size_flags_horizontal = 3
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 22
+text = "Inventory"
+
+[node name="CloseButton" type="Button" parent="Screen/Center/Panel/Margin/Layout/Header"]
+theme_override_font_sizes/font_size = 16
+text = "Close"
+
+[node name="Grid" type="GridContainer" parent="Screen/Center/Panel/Margin/Layout"]
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 4
+script = ExtResource("2_inventorygrid")
+
+[node name="Details" type="VBoxContainer" parent="Screen/Center/Panel/Margin/Layout"]
+custom_minimum_size = Vector2(328, 0)
+theme_override_constants/separation = 6
+
+[node name="ItemName" type="Label" parent="Screen/Center/Panel/Margin/Layout/Details"]
+theme_override_font_sizes/font_size = 19
+
+[node name="ItemDesc" type="Label" parent="Screen/Center/Panel/Margin/Layout/Details"]
+custom_minimum_size = Vector2(328, 46)
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="ItemValue" type="Label" parent="Screen/Center/Panel/Margin/Layout/Details"]
+theme_override_font_sizes/font_size = 14

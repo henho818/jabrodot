@@ -25,6 +25,12 @@ public sealed class NewLineRequest
     /// <summary>Empty, <c>&lt;end&gt;</c>, or an existing Dialog id.</summary>
     public string Next { get; set; } = "";
 
+    /// <summary>Empty, or an item id the line hands over when it's clicked through.</summary>
+    public string ItemAward { get; set; } = "";
+
+    /// <summary>Empty, or an item id the line is gated on. Not read at runtime yet.</summary>
+    public string ItemDependency { get; set; } = "";
+
     public float Pitch { get; set; } = 2f;
 }
 
@@ -59,6 +65,12 @@ public sealed class DialogEditSession
     public TsvDocument LocalizationDocument { get; private set; }
 
     /// <summary>
+    /// Item_Item.txt, for offering and checking ItemAward/ItemDependency values. Read-only here
+    /// for the same reason styles are: this panel authors dialogue, not the item table.
+    /// </summary>
+    public TsvDocument ItemDocument { get; private set; }
+
+    /// <summary>
     /// The graph's roots, read from the scenes on Reload. They aren't editable here -- moving a
     /// Dialog onto a different agent is a scene edit, done in the Inspector.
     /// </summary>
@@ -69,7 +81,7 @@ public sealed class DialogEditSession
 
     public bool IsDirty => Documents.Any(document => document.IsDirty);
 
-    /// <summary>The tables this session may write. Styles are read-only here.</summary>
+    /// <summary>The tables this session may write. Styles and items are read-only here.</summary>
     private IEnumerable<TsvDocument> Documents
     {
         get
@@ -94,6 +106,7 @@ public sealed class DialogEditSession
         SubDialogDocument = TsvDocument.Load(DataPaths.SubDialog);
         StyleDocument = TsvDocument.Load(DataPaths.SubDialogStyle);
         LocalizationDocument = TsvDocument.Load(DataPaths.Localization);
+        ItemDocument = TsvDocument.Load(DataPaths.Item);
         EntryPoints = DialogEntryPointScanner.Scan();
         RebuildGraph();
     }
@@ -122,12 +135,32 @@ public sealed class DialogEditSession
     private void RebuildGraph()
     {
         Graph = DialogGraph.Build(
-            DialogDocument, SubDialogDocument, StyleDocument, EntryPoints, LocalizationDocument);
+            DialogDocument, SubDialogDocument, StyleDocument, EntryPoints, LocalizationDocument,
+            ItemDocument);
     }
 
     public IReadOnlyList<string> StyleIds => StyleDocument.Rows.Select(row => row.Id).ToList();
 
     public IReadOnlyList<string> DialogIds => DialogDocument.Rows.Select(row => row.Id).ToList();
+
+    public IReadOnlyList<string> ItemIds => ItemDocument.Rows.Select(row => row.Id).ToList();
+
+    /// <summary>
+    /// English name for an item id, for labelling the authoring dropdowns -- the item table stores
+    /// a localization key in Name, which on its own reads as "I.Copper1" rather than "Copper Coin".
+    /// Falls back to the raw key, then to the id, so a half-authored item still labels itself.
+    /// </summary>
+    public string ItemDisplayName(string itemId)
+    {
+        string nameKey = ItemDocument.Find(itemId)?.GetString(ItemSchema.NameColumn) ?? "";
+        if (string.IsNullOrEmpty(nameKey))
+        {
+            return itemId;
+        }
+
+        string english = LocalizationDocument.Find(nameKey)?.GetString(DialogSchema.PreviewLocale) ?? "";
+        return string.IsNullOrEmpty(english) ? nameKey : english;
+    }
 
     // ---- creation ----------------------------------------------------------------------
 
@@ -199,6 +232,8 @@ public sealed class DialogEditSession
         row.SetString(DialogSchema.LocalizationIdColumn, localizationId);
         row.SetString(DialogSchema.StyleColumn, request.StyleId);
         row.SetString(DialogSchema.NextColumn, request.Next);
+        row.SetString(DialogSchema.ItemAwardColumn, request.ItemAward);
+        row.SetString(DialogSchema.ItemDependencyColumn, request.ItemDependency);
         row.SetString(DialogSchema.PitchColumn, request.Pitch.ToString("0.###"));
 
         // An existing key is a deliberate reuse (several lines share LD.OK today), so its text --
@@ -234,6 +269,39 @@ public sealed class DialogEditSession
 
         string description = next.Length == 0 ? "nothing" : next;
         return EditResult.Success($"{subDialogId} now leads to {description}.");
+    }
+
+    /// <summary>Sets the item a line hands over when it's clicked through, or clears it.</summary>
+    public EditResult SetLineItemAward(string subDialogId, string itemId)
+    {
+        return SetLineItem(subDialogId, DialogSchema.ItemAwardColumn, itemId, "awards");
+    }
+
+    /// <summary>Sets the item a line is gated on, or clears it. Not read at runtime yet.</summary>
+    public EditResult SetLineItemDependency(string subDialogId, string itemId)
+    {
+        return SetLineItem(subDialogId, DialogSchema.ItemDependencyColumn, itemId, "requires");
+    }
+
+    private EditResult SetLineItem(string subDialogId, string column, string itemId, string verb)
+    {
+        if (SubDialogDocument.Find(subDialogId) == null)
+        {
+            return EditResult.Failure($"'{subDialogId}' is not a SubDialog.");
+        }
+
+        itemId ??= "";
+        if (itemId.Length > 0 && !ItemDocument.Has(itemId))
+        {
+            return EditResult.Failure($"'{itemId}' has no row in Item_Item.txt.");
+        }
+
+        SubDialogDocument.SetValue(subDialogId, column, itemId);
+        RebuildGraph();
+
+        return EditResult.Success(itemId.Length == 0
+            ? $"{subDialogId} {verb} nothing."
+            : $"{subDialogId} {verb} {itemId}.");
     }
 
     // ---- editing -----------------------------------------------------------------------
@@ -464,6 +532,14 @@ public sealed class DialogEditSession
         if (next.Length > 0 && next != DialogSchema.EndCommand && !DialogDocument.Has(next))
         {
             return EditResult.Failure($"Next '{next}' is not a Dialog, <end>, or empty.");
+        }
+
+        foreach (string itemId in new[] { request.ItemAward, request.ItemDependency })
+        {
+            if (!string.IsNullOrEmpty(itemId) && !ItemDocument.Has(itemId))
+            {
+                return EditResult.Failure($"'{itemId}' has no row in Item_Item.txt.");
+            }
         }
 
         return EditResult.Success("");

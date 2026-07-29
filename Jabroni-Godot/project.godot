@@ -23,8 +23,14 @@ DialogRepository="*res://scripts/Data/DialogRepository.cs"
 SubDialogRepository="*res://scripts/Data/SubDialogRepository.cs"
 SubDialogStyleRepository="*res://scripts/Data/SubDialogStyleRepository.cs"
 ItemRepository="*res://scripts/Data/ItemRepository.cs"
+PlayerInventory="*res://scripts/Inventory/PlayerInventory.cs"
 SettingsService="*res://scripts/Settings/SettingsService.cs"
 GameBootstrap="*res://scripts/Core/GameBootstrap.cs"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1200
 
 [dotnet]
 

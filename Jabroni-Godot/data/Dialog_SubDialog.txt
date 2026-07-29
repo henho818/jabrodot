@@ -9,3 +9,8 @@ S.MidWest_Response	LD.MidWest_Answer	NPC_speech	<end>			3
 S.IntroL1	LD.IntroL1	narrator	D.Intro2			2
 S.Intro2	LD.Intro2	NPC_speech	D.Intro3			2
 S.Intro3	LD.Intro3	NPC_speech	<end>			2
+S.TestScroll1	LD.TestScroll1	NPC_speech	D.TestThought			2
+S.TestScroll2	LD.TestScroll2	NPC_speech	D.TestThought			2
+S.TestScroll3	LD.TestScroll3	NPC_speech	D.TestThought			2
+S.Charity	LD.Charity	NPC_speech	D.CharityAward			2
+S.CharityAward	LD.CharityAward	narrator	<end>	copper1		1

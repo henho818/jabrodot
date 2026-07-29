@@ -39,6 +39,7 @@ public sealed class DialogFormResult
 public partial class DialogLineForm : ConfirmationDialog
 {
     private const string NoNextLabel = "(nothing — statement line)";
+    private const string NoItemLabel = "(none)";
 
     public event Action<DialogFormResult> Submitted;
 
@@ -52,6 +53,8 @@ public partial class DialogLineForm : ConfirmationDialog
     private LineEdit _englishText;
     private OptionButton _style;
     private OptionButton _next;
+    private OptionButton _itemAward;
+    private OptionButton _itemDependency;
     private SpinBox _pitch;
 
     private DialogFormMode _mode;
@@ -77,6 +80,15 @@ public partial class DialogLineForm : ConfirmationDialog
         _englishText = AddLineEdit(grid, "English text");
         _style = AddOptionButton(grid, "Style");
         _next = AddOptionButton(grid, "Next");
+
+        _itemAward = AddOptionButton(grid, "Awards item");
+        _itemAward.TooltipText = "Handed to the player on the click that advances this line. "
+                                 + "A line with no Next never advances, so it would never be given.";
+
+        _itemDependency = AddOptionButton(grid, "Requires item");
+        _itemDependency.TooltipText = "Authoring only for now -- DialogBox does not read "
+                                      + "ItemDependency, so this gates nothing at runtime yet.";
+
         _pitch = AddSpinBox(grid, "Pitch (semitones)", -12, 12, 1);
 
         // The key is derived from the line id (S.Foo -> LD.Foo) until the author overrides it,
@@ -160,6 +172,9 @@ public partial class DialogLineForm : ConfirmationDialog
         string next = row.GetString(DialogSchema.NextColumn);
         SelectItem(_next, string.IsNullOrEmpty(next) ? NoNextLabel : next, 0);
 
+        SelectItem(_itemAward, row.GetString(DialogSchema.ItemAwardColumn), 0);
+        SelectItem(_itemDependency, row.GetString(DialogSchema.ItemDependencyColumn), 0);
+
         PopupAndFocus(_englishText);
     }
 
@@ -181,6 +196,9 @@ public partial class DialogLineForm : ConfirmationDialog
 
         // A line that closes the box is the safest default: it can't leave a Dialog with no exit.
         SelectItem(_next, DialogSchema.EndCommand, 1);
+
+        _itemAward.Selected = 0;
+        _itemDependency.Selected = 0;
     }
 
     private void PopulateChoices(DialogEditSession session)
@@ -197,6 +215,26 @@ public partial class DialogLineForm : ConfirmationDialog
         foreach (string dialogId in session.DialogIds)
         {
             _next.AddItem(dialogId);
+        }
+
+        PopulateItemChoices(_itemAward, session);
+        PopulateItemChoices(_itemDependency, session);
+    }
+
+    /// <summary>
+    /// Fills an item dropdown with "(none)" plus every item id. The id is the item text -- it is
+    /// what the column stores, and what <see cref="SelectItem"/> matches on -- with the readable
+    /// name carried in the per-item tooltip so the list stays honest about what it writes.
+    /// </summary>
+    private static void PopulateItemChoices(OptionButton option, DialogEditSession session)
+    {
+        option.Clear();
+        option.AddItem(NoItemLabel);
+
+        foreach (string itemId in session.ItemIds)
+        {
+            option.AddItem(itemId);
+            option.SetItemTooltip(option.ItemCount - 1, session.ItemDisplayName(itemId));
         }
     }
 
@@ -251,6 +289,8 @@ public partial class DialogLineForm : ConfirmationDialog
             EnglishText = _englishText.Text,
             StyleId = _style.Selected >= 0 ? _style.GetItemText(_style.Selected) : "",
             Next = _next.Selected <= 0 ? "" : _next.GetItemText(_next.Selected),
+            ItemAward = SelectedItemId(_itemAward),
+            ItemDependency = SelectedItemId(_itemDependency),
             Pitch = (float)_pitch.Value,
         };
 
@@ -268,6 +308,12 @@ public partial class DialogLineForm : ConfirmationDialog
                 FirstLine = line,
             },
         });
+    }
+
+    /// <summary>Index 0 is always "(none)", which the column stores as an empty cell.</summary>
+    private static string SelectedItemId(OptionButton option)
+    {
+        return option.Selected <= 0 ? "" : option.GetItemText(option.Selected);
     }
 
     // ---- tiny form builders ------------------------------------------------------------

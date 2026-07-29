@@ -162,7 +162,61 @@ public static class DialogGraphValidator
             });
         }
 
+        ValidateItemReferences(graph, dialog, line, diagnostics);
         ValidateLocalization(graph, line, diagnostics);
+    }
+
+    // The award rules mirror DialogBox.OnLineAdvanceRequested, which grants on the click that takes
+    // the line away and bails out before that on a line with no Next. ItemDependency has no runtime
+    // behaviour to mirror yet, so a bad id there is only worth a warning.
+    private static void ValidateItemReferences(
+        DialogGraph graph,
+        DialogNode dialog,
+        DialogLineNode line,
+        List<DialogDiagnostic> diagnostics)
+    {
+        if (!string.IsNullOrEmpty(line.ItemDependencyId) && !graph.ItemIds.Contains(line.ItemDependencyId))
+        {
+            diagnostics.Add(new DialogDiagnostic
+            {
+                Severity = DialogDiagnosticSeverity.Warning,
+                Code = "unknown-item-dependency",
+                Subject = line.SubDialogId,
+                Message = $"ItemDependency is '{line.ItemDependencyId}', which has no row in "
+                          + "Item_Item.txt. Nothing reads the column yet, so this gates nothing "
+                          + "either way -- but it won't mean what it says once something does.",
+            });
+        }
+
+        if (string.IsNullOrEmpty(line.ItemAwardId))
+        {
+            return;
+        }
+
+        if (!graph.ItemIds.Contains(line.ItemAwardId))
+        {
+            diagnostics.Add(new DialogDiagnostic
+            {
+                Severity = DialogDiagnosticSeverity.Error,
+                Code = "unknown-item-award",
+                Subject = line.SubDialogId,
+                Message = $"ItemAward is '{line.ItemAwardId}', which has no row in Item_Item.txt "
+                          + "-- clicking this line warns and hands over nothing.",
+            });
+            return;
+        }
+
+        if (line.LinkKind == DialogLinkKind.None)
+        {
+            diagnostics.Add(new DialogDiagnostic
+            {
+                Severity = DialogDiagnosticSeverity.Warning,
+                Code = "award-never-granted",
+                Subject = line.SubDialogId,
+                Message = $"Awards '{line.ItemAwardId}' but has no Next or <end>, so clicking it in "
+                          + $"{dialog.DialogId} never advances and the item is never handed over.",
+            });
+        }
     }
 
     private static void ValidateLocalization(DialogGraph graph, DialogLineNode line, List<DialogDiagnostic> diagnostics)
