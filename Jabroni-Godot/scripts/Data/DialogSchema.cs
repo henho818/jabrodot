@@ -11,8 +11,12 @@ public static class DialogSchema
     /// <summary>A SubDialog's Next value meaning "close the box" rather than "jump to this Dialog".</summary>
     public const string EndCommand = "<end>";
 
-    /// <summary>Locales that Localization.tsv is expected to carry a column for.</summary>
-    public static readonly string[] Locales = { "en", "zh", "ja", "es" };
+    /// <summary>
+    /// Locales that Localization.tsv is expected to carry a column for, as ISO 639-1 codes --
+    /// the same names TranslationServer wants, so LocalizationBootstrap can hand each column
+    /// straight to a Translation without a lookup table in between.
+    /// </summary>
+    public static readonly string[] Locales = { "en", "zh", "ja", "es", "ru", "fr" };
 
     /// <summary>The locale used for preview text in editor tooling.</summary>
     public const string PreviewLocale = "en";
