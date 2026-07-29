@@ -28,10 +28,16 @@ public static class DialogSchema
     /// <summary>
     /// The fixed SubDialog slots on a Dialog row, in cascade order. A Dialog shows at most this
     /// many lines; empty slots are skipped rather than treated as a terminator.
+    /// <para>
+    /// Widening this is half the change: Dialog_Dialog.txt's header has to gain the matching
+    /// columns too, because TsvDocument takes its column set from the file and silently drops a
+    /// write to a column the header doesn't have.
+    /// </para>
     /// </summary>
     public static readonly string[] SubDialogSlotColumns =
     {
-        "SubDialogID0", "SubDialogID1", "SubDialogID2", "SubDialogID3", "SubDialogID4", "SubDialogID5"
+        "SubDialogID0", "SubDialogID1", "SubDialogID2", "SubDialogID3", "SubDialogID4",
+        "SubDialogID5", "SubDialogID6", "SubDialogID7", "SubDialogID8", "SubDialogID9"
     };
 
     // Dialog_SubDialog.txt
