@@ -32,6 +32,12 @@ public sealed class DialogLineNode
     public string RawNext { get; init; } = "";
     public DialogLinkKind LinkKind { get; init; }
 
+    /// <summary>Item id handed over when this line is clicked through, or empty for none.</summary>
+    public string ItemAwardId { get; init; } = "";
+
+    /// <summary>Item id this line is gated on, or empty. Authored but not read at runtime yet.</summary>
+    public string ItemDependencyId { get; init; } = "";
+
     /// <summary>Target Dialog id when <see cref="LinkKind"/> is Jump, otherwise empty.</summary>
     public string NextDialogId => LinkKind == DialogLinkKind.Jump ? RawNext : "";
 
@@ -81,6 +87,9 @@ public sealed class DialogGraph
     /// <summary>Every SubDialog id that has a row, whether or not a Dialog uses it.</summary>
     public IReadOnlySet<string> SubDialogIds { get; private init; }
 
+    /// <summary>Item ids defined in Item_Item.txt, for checking what a line's ItemAward names.</summary>
+    public IReadOnlySet<string> ItemIds { get; private init; }
+
     /// <summary>Localization keys mapped to their per-locale text, for missing/blank checks.</summary>
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Localization { get; private init; }
 
@@ -92,7 +101,8 @@ public sealed class DialogGraph
             TsvDocument.Load(DataPaths.SubDialog),
             TsvDocument.Load(DataPaths.SubDialogStyle),
             DialogEntryPointScanner.Scan(),
-            TsvDocument.Load(DataPaths.Localization));
+            TsvDocument.Load(DataPaths.Localization),
+            TsvDocument.Load(DataPaths.Item));
     }
 
     /// <summary>
@@ -106,7 +116,8 @@ public sealed class DialogGraph
         TsvDocument subDialogDocument,
         TsvDocument styleDocument,
         IReadOnlyList<DialogEntryPoint> entryPoints,
-        TsvDocument localizationDocument)
+        TsvDocument localizationDocument,
+        TsvDocument itemDocument)
     {
         var subDialogRows = new Dictionary<string, TsvRow>();
         foreach (var row in subDialogDocument.Rows)
@@ -137,6 +148,7 @@ public sealed class DialogGraph
             EntryPoints = entryPoints,
             StyleIds = styleDocument.Rows.Select(row => row.Id).ToHashSet(),
             SubDialogIds = subDialogRows.Keys.ToHashSet(),
+            ItemIds = itemDocument.Rows.Select(row => row.Id).ToHashSet(),
             Localization = localization,
         };
     }
@@ -175,6 +187,8 @@ public sealed class DialogGraph
                 StyleId = subRow.GetString(DialogSchema.StyleColumn),
                 RawNext = rawNext,
                 LinkKind = ClassifyNext(rawNext),
+                ItemAwardId = subRow.GetString(DialogSchema.ItemAwardColumn),
+                ItemDependencyId = subRow.GetString(DialogSchema.ItemDependencyColumn),
                 PreviewText = localization.TryGetValue(localizationId, out var text)
                     ? text[DialogSchema.PreviewLocale]
                     : null,

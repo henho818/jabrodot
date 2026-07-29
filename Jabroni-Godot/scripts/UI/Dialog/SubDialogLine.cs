@@ -14,15 +14,25 @@ public partial class SubDialogLine : PanelContainer
 
     public string NextDialogId { get; private set; }
 
+    /// <summary>Item id this line hands over when it is clicked through, or empty for none.</summary>
+    public string ItemAwardId { get; private set; }
+
     public override void _Ready()
     {
         _textAnimator = GetNode<TextAnimator>("Margin/Text");
     }
 
-    public void Setup(string text, Color background, Color textColor, string nextDialogId, float typingPitchScale)
+    public void Setup(
+        string text,
+        Color background,
+        Color textColor,
+        string nextDialogId,
+        string itemAwardId,
+        float typingPitchScale)
     {
         _fullText = text;
         NextDialogId = nextDialogId;
+        ItemAwardId = itemAwardId;
 
         // Rounded corners + soft shadow stand in for the source project's 9-sliced
         // Background.png sprite (not ported as a texture -- StyleBoxFlat gets the same look

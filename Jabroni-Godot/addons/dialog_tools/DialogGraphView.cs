@@ -328,7 +328,9 @@ public partial class DialogGraphView : GraphEdit
             _ => "goes nowhere (no Next)",
         };
 
-        return $"{line.SubDialogId}\nkey: {line.LocalizationId}\nstyle: {line.StyleId}\n{destination}";
+        string award = string.IsNullOrEmpty(line.ItemAwardId) ? "" : $"\nawards: {line.ItemAwardId}";
+
+        return $"{line.SubDialogId}\nkey: {line.LocalizationId}\nstyle: {line.StyleId}\n{destination}{award}";
     }
 
     private static Color LineColor(DialogGraph graph, DialogLineNode line)

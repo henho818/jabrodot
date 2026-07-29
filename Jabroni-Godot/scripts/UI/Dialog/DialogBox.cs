@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Godot;
 using Jabroni.Data;
+using Jabroni.Inventory;
 
 namespace Jabroni.UI.Dialog;
 
@@ -9,7 +10,8 @@ namespace Jabroni.UI.Dialog;
 /// cascades their typewriter reveals one after another, and advances/closes on click,
 /// mirroring the source project's DialogBox/SubDialogBox cascade-and-click-to-advance model.
 /// Also announces the speaker portrait (see AvatarSheet) whenever a new Dialog is triggered --
-/// Dialogs without an AvatarSheet (e.g. the narrator) announce none.
+/// Dialogs without an AvatarSheet (e.g. the narrator) announce none -- and hands a line's
+/// ItemAward to PlayerInventory as the player clicks through it.
 /// Exposes a single Instance (only one dialog box exists) so AI tasks can trigger/observe
 /// it without needing a scene-path lookup.
 /// <para>
@@ -137,9 +139,11 @@ public partial class DialogBox : Control
             float pitchSemitones = subDialogRow.GetFloat(DialogSchema.PitchColumn, 0f);
             float pitchScale = Mathf.Pow(2f, pitchSemitones / 12f);
 
+            string itemAward = subDialogRow.GetString(DialogSchema.ItemAwardColumn);
+
             var line = _lineScene.Instantiate<SubDialogLine>();
             _lineContainer.AddChild(line);
-            line.Setup(localizedText, bg, textColor, next, pitchScale);
+            line.Setup(localizedText, bg, textColor, next, itemAward, pitchScale);
             line.Visible = false;
             line.AdvanceRequested += () => OnLineAdvanceRequested(line);
 
@@ -175,14 +179,44 @@ public partial class DialogBox : Control
     private void OnLineAdvanceRequested(SubDialogLine line)
     {
         string next = line.NextDialogId;
+
+        // A line with no Next is a statement, not a choice: clicking it leaves the box exactly as
+        // it is. Bailing out first is what keeps an ItemAward on such a line from being handed
+        // over again on every further click -- there is no single moment to grant it, so it isn't
+        // granted at all, and DialogGraphValidator reports the line rather than letting it look
+        // like it works.
+        if (string.IsNullOrEmpty(next))
+        {
+            return;
+        }
+
+        // Granted before the transition, while this line is still the one that was clicked. Both
+        // branches below clear the box, which detaches the line immediately (see ClearLines), so
+        // a second click can't reach it and award twice.
+        GrantAward(line.ItemAwardId);
+
         if (next == DialogSchema.EndCommand)
         {
             Close();
         }
-        else if (!string.IsNullOrEmpty(next))
+        else
         {
             TriggerDialog(next);
         }
+    }
+
+    /// <summary>
+    /// Hands a line's ItemAward to the player. PlayerInventory already warns about an id the item
+    /// table doesn't have, so a typo'd award is reported rather than silently dropped.
+    /// </summary>
+    private void GrantAward(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+        {
+            return;
+        }
+
+        GetNode<PlayerInventory>("/root/PlayerInventory").Add(itemId);
     }
 
     /// <summary>Force-closes the dialog from outside (e.g. the chat partner walking out of range), same as clicking through to an `&lt;end&gt;` line.</summary>
