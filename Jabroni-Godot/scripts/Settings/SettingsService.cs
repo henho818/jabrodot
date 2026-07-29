@@ -1,5 +1,6 @@
 using Godot;
 using Jabroni.Core;
+using Jabroni.Data;
 
 namespace Jabroni.Settings;
 
@@ -34,12 +35,22 @@ public partial class SettingsService : Node
 
     private static readonly int[] FpsLimitPresets = { 30, 60, 120, 240, 0 };
 
+    /// <summary>Locale used when nothing is saved yet, or when the saved one is no longer offered.</summary>
+    public const string DefaultLocale = "en";
+
     public float MainVolume { get; private set; } = 0.75f;
     public float MusicVolume { get; private set; } = 0.75f;
     public float SfxVolume { get; private set; } = 0.75f;
     public float DialogVolume { get; private set; } = 0.75f;
     public float DialogPlaybackSpeedFactor { get; private set; } = 1.0f;
     public int FpsLimit { get; private set; } = 30;
+
+    /// <summary>
+    /// The active language, as one of DialogSchema.Locales. This service owns it rather than
+    /// LocalizationBootstrap, which only registers the Translation resources -- the saved choice
+    /// has to outrank a hardcoded default, and this is the thing that knows what was saved.
+    /// </summary>
+    public string Locale { get; private set; } = DefaultLocale;
 
     public override void _Ready()
     {
@@ -78,6 +89,19 @@ public partial class SettingsService : Node
     private void AdjustDialogSpeed(float delta)
     {
         DialogPlaybackSpeedFactor = Mathf.Clamp(DialogPlaybackSpeedFactor + delta, 0.5f, 2.0f);
+        Apply();
+        Save();
+    }
+
+    /// <summary>Switches language and persists it. Unknown locales are ignored rather than saved.</summary>
+    public void SetLocale(string locale)
+    {
+        if (locale == Locale || System.Array.IndexOf(DialogSchema.Locales, locale) < 0)
+        {
+            return;
+        }
+
+        Locale = locale;
         Apply();
         Save();
     }
@@ -125,6 +149,11 @@ public partial class SettingsService : Node
 
         Engine.MaxFps = FpsLimit;
 
+        // Safe to run before LocalizationBootstrap has registered anything: TranslationServer
+        // keeps the locale and matches translations added afterwards against it. Which matters,
+        // because this autoload is listed ahead of the GameBootstrap that does the registering.
+        TranslationServer.SetLocale(Locale);
+
         EmitSignal(SignalName.SettingsChanged);
     }
 
@@ -142,6 +171,14 @@ public partial class SettingsService : Node
         DialogVolume = (float)config.GetValue(Section, "dialog_volume", DialogVolume);
         DialogPlaybackSpeedFactor = (float)config.GetValue(Section, "dialog_speed", DialogPlaybackSpeedFactor);
         FpsLimit = (int)config.GetValue(Section, "fps_limit", FpsLimit);
+
+        // A locale dropped from DialogSchema.Locales since it was saved would otherwise leave the
+        // game running with no translations at all, so it falls back rather than being trusted.
+        Locale = (string)config.GetValue(Section, "locale", Locale);
+        if (System.Array.IndexOf(DialogSchema.Locales, Locale) < 0)
+        {
+            Locale = DefaultLocale;
+        }
     }
 
     private void Save()
@@ -153,6 +190,7 @@ public partial class SettingsService : Node
         config.SetValue(Section, "dialog_volume", DialogVolume);
         config.SetValue(Section, "dialog_speed", DialogPlaybackSpeedFactor);
         config.SetValue(Section, "fps_limit", FpsLimit);
+        config.SetValue(Section, "locale", Locale);
         config.Save(SettingsPath);
     }
 }
