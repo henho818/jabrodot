@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using Godot;
 using Jabroni.Settings;
 
@@ -272,22 +273,31 @@ public partial class TextAnimator : RichTextLabel
 
     /// <summary>
     /// Greedily breaks the text into rows no wider than the cap, so <see cref="Play"/> can bake
-    /// the breaks in as real newlines. A word wider than the cap on its own gets a row to itself
+    /// the breaks in as real newlines. A chunk wider than the cap on its own gets a row to itself
     /// and overhangs it, the same as any word-wrapping would do.
+    /// <para>
+    /// Rows are assembled from chunks rather than space-delimited words. Chinese and Japanese
+    /// don't put spaces between words, so splitting on whitespace hands back the entire line as
+    /// one unbreakable token, and it runs straight off the box no matter how narrow the cap is.
+    /// <see cref="SplitIntoChunks"/> decides where a break is permitted at all; this method only
+    /// picks which of those opportunities to take.
+    /// </para>
     /// </summary>
     private string WrapToWidth(string text, float maxWidth)
     {
         var rows = new List<string>();
         string row = "";
 
-        foreach (string word in text.Split(' '))
+        foreach (var chunk in SplitIntoChunks(text))
         {
-            string candidate = row.Length == 0 ? word : row + " " + word;
+            string candidate = row.Length == 0
+                ? chunk.Text
+                : row + (chunk.FollowsSpace ? " " : "") + chunk.Text;
 
             if (row.Length > 0 && _font.GetStringSize(candidate, HorizontalAlignment.Left, -1, _fontSize).X > maxWidth)
             {
                 rows.Add(row);
-                row = word;
+                row = chunk.Text;
             }
             else
             {
@@ -297,6 +307,94 @@ public partial class TextAnimator : RichTextLabel
 
         rows.Add(row);
         return string.Join('\n', rows);
+    }
+
+    /// <summary>A run of text that must stay on one row, and whether a dropped space preceded it.</summary>
+    private readonly record struct TextChunk(string Text, bool FollowsSpace);
+
+    /// <summary>
+    /// Cuts the text at every point a row is allowed to break, leaving pieces
+    /// <see cref="WrapToWidth"/> can treat as atomic. A space is a break whose character is
+    /// dropped (the row join puts it back); between CJK characters nearly every position is a
+    /// break, which is exactly why those scripts need no spaces to begin with.
+    /// </summary>
+    private static List<TextChunk> SplitIntoChunks(string text)
+    {
+        var chunks = new List<TextChunk>();
+        var current = new StringBuilder();
+        bool followsSpace = false;
+
+        void Flush()
+        {
+            if (current.Length > 0)
+            {
+                chunks.Add(new TextChunk(current.ToString(), followsSpace));
+                current.Clear();
+            }
+        }
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+
+            if (c == ' ')
+            {
+                Flush();
+                followsSpace = true;
+                continue;
+            }
+
+            if (current.Length > 0 && AllowsBreakBetween(text[i - 1], c))
+            {
+                Flush();
+                followsSpace = false;
+            }
+
+            current.Append(c);
+        }
+
+        Flush();
+        return chunks;
+    }
+
+    /// <summary>
+    /// Whether a row may break between two adjacent characters. Latin runs break only at spaces,
+    /// which the caller handles; anything touching a wide-script character may break, subject to
+    /// the kinsoku rules below.
+    /// </summary>
+    private static bool AllowsBreakBetween(char before, char after)
+    {
+        if (!IsWideScript(before) && !IsWideScript(after))
+        {
+            return false;
+        }
+
+        return !NoLineStart.Contains(after) && !NoLineEnd.Contains(before);
+    }
+
+    /// <summary>
+    /// Punctuation that may not open a row -- it has to stay against the character it follows,
+    /// or a line ends up starting with a stray comma. (Kinsoku shori, the same rule Japanese and
+    /// Chinese typesetting has always used.)
+    /// </summary>
+    private const string NoLineStart = "、。，．：；！？）］｝」』】〉》〕・ー々ゝゞ…‥,.:;!?)]}";
+
+    /// <summary>Punctuation that may not close a row, for the same reason in the other direction.</summary>
+    private const string NoLineEnd = "（［｛「『【〈《〔([{";
+
+    /// <summary>
+    /// Whether a character belongs to a script that breaks between characters rather than between
+    /// words -- Chinese, Japanese, Korean, and the full-width forms that travel with them.
+    /// </summary>
+    private static bool IsWideScript(char c)
+    {
+        return c is (>= '\u3000' and <= '\u303F')  // CJK symbols and punctuation
+            or (>= '\u3040' and <= '\u30FF')       // hiragana and katakana
+            or (>= '\u3400' and <= '\u4DBF')       // CJK unified ideographs, extension A
+            or (>= '\u4E00' and <= '\u9FFF')       // CJK unified ideographs
+            or (>= '\uAC00' and <= '\uD7AF')       // hangul syllables
+            or (>= '\uFF00' and <= '\uFF60')       // full-width forms
+            or (>= '\uFFE0' and <= '\uFFE6');      // full-width symbols
     }
 
     // Width uses a pure ease-out: a fixed fraction of the remaining gap per unit time, fastest on
