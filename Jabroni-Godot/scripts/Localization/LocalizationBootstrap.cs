@@ -8,10 +8,13 @@ namespace Jabroni.Localization;
 /// TranslationServer, so the rest of the game can use Godot's built-in Tr()/auto-translate
 /// instead of a bespoke localization service -- locale switching and live UI re-translation
 /// come for free from the engine this way.
+/// <para>
+/// Registering is all this does. Which locale is *active* is SettingsService's, so that the
+/// player's saved language isn't overwritten by a default every time the game starts.
+/// </para>
 /// </summary>
 public static class LocalizationBootstrap
 {
-	private const string DefaultLocale = "en";
 	private static readonly string[] Locales = DialogSchema.Locales;
 
 	public static void Load()
@@ -36,7 +39,5 @@ public static class LocalizationBootstrap
 
 			TranslationServer.AddTranslation(translation);
 		}
-
-		TranslationServer.SetLocale(DefaultLocale);
 	}
 }

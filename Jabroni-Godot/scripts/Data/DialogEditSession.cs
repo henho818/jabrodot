@@ -211,7 +211,10 @@ public sealed class DialogEditSession
         if (slot == null)
         {
             return EditResult.Failure(
-                $"{dialogId} already fills all {DialogSchema.SubDialogSlotColumns.Length} SubDialog slots.");
+                $"{dialogId} is full at {DialogSchema.SubDialogSlotColumns.Length} lines -- "
+                + "every SubDialog slot on the row is taken, so there is nowhere to put another. "
+                + "Raising the cap means widening DialogSchema.SubDialogSlotColumns and adding "
+                + "the matching columns to Dialog_Dialog.txt's header.");
         }
 
         DialogDocument.SetValue(dialogId, slot, request.SubDialogId.Trim());

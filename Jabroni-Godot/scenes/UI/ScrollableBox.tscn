@@ -9,6 +9,11 @@ anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("1_scrollablebox")
 
+; First child, so Portrait and Mask sit above it and win hit-testing -- a tap on a line must
+; reach the line, not be eaten by the catcher behind it.
+[node name="TouchArea" type="Control" parent="."]
+mouse_filter = 0
+
 [node name="Portrait" type="TextureRect" parent="."]
 custom_minimum_size = Vector2(96, 96)
 mouse_filter = 2
