@@ -8,3 +8,4 @@ D.Intro2			S.Intro2
 D.Intro3			S.Intro3
 D.Charity	avatars.png	8	S.Charity
 D.CharityAward			S.CharityAward
+D.WaterEdge			S.WaterEdge

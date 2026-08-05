@@ -20,6 +20,7 @@
 [ext_resource type="Script" uid="uid://cg1npj8twlxqh" path="res://scripts/Nav/NavNode.cs" id="19_navnode"]
 [ext_resource type="PackedScene" uid="uid://b1cybunvxcyli" path="res://scenes/narrator.tscn" id="19_nfivy"]
 [ext_resource type="PackedScene" path="res://scenes/UI/InventoryUI.tscn" id="20_inventoryui"]
+[ext_resource type="Script" uid="uid://0tpn7urdsl23" path="res://scripts/Triggers/AreaTrigger.cs" id="21_areatrigger"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -75,6 +76,9 @@ size = Vector2(44, 24)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_water"]
 transparency = 1
 albedo_color = Color(0.1, 0.35, 0.55, 0.55)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wateredge"]
+size = Vector3(44, 5, 24)
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_shark"]
 radius = 1.0
@@ -393,6 +397,19 @@ grow_vertical = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 45)
 mesh = SubResource("PlaneMesh_water")
 surface_material_override/0 = SubResource("StandardMaterial3D_water")
+
+[node name="WaterEdgeTrigger" type="Area3D" parent="." unique_id=784103552]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 45)
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+script = ExtResource("21_areatrigger")
+ChatDialogId = "D.WaterEdge"
+OneShot = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WaterEdgeTrigger" unique_id=1290447631]
+shape = SubResource("BoxShape3D_wateredge")
+debug_color = Color(1, 0.45, 0.1, 0.35)
 
 [node name="CausticsPivot" type="Node3D" parent="." unique_id=397606146]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 45)
