@@ -8,6 +8,16 @@ namespace Jabroni.Core;
 /// </summary>
 public static class InputActions
 {
+    /// <summary>
+    /// Device id meaning "any device". Every registered event needs it explicitly. An InputEvent
+    /// built in code defaults to a device id that only matches real hardware -- the editor's Input
+    /// Map fills this in for you, and building the events here skips that. Left at the default, an
+    /// action ignores anything Godot tags InputEvent.DEVICE_ID_EMULATION (-1), which is exactly
+    /// what a finger becomes: emulate_mouse_from_touch turns a touch into a left-click carrying
+    /// that id, so taps matched no action at all while the mouse worked fine.
+    /// </summary>
+    private const int AllDevices = -1;
+
     public const string CameraZoomIn = "camera_zoom_in";
     public const string CameraZoomOut = "camera_zoom_out";
     public const string CameraOrbit = "camera_orbit";
@@ -48,7 +58,7 @@ public static class InputActions
         }
 
         InputMap.AddAction(action);
-        InputMap.ActionAddEvent(action, new InputEventMouseButton { ButtonIndex = button });
+        InputMap.ActionAddEvent(action, new InputEventMouseButton { ButtonIndex = button, Device = AllDevices });
     }
 
     private static void AddKeyAction(string action, Key key)
@@ -59,6 +69,6 @@ public static class InputActions
         }
 
         InputMap.AddAction(action);
-        InputMap.ActionAddEvent(action, new InputEventKey { Keycode = key });
+        InputMap.ActionAddEvent(action, new InputEventKey { Keycode = key, Device = AllDevices });
     }
 }

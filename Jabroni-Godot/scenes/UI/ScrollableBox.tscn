@@ -10,9 +10,11 @@ mouse_filter = 2
 script = ExtResource("1_scrollablebox")
 
 ; First child, so Portrait and Mask sit above it and win hit-testing -- a tap on a line must
-; reach the line, not be eaten by the catcher behind it.
-[node name="TouchArea" type="Control" parent="."]
+; reach the line, not be eaten by the backdrop behind it. mouse_filter 0 (STOP) is what makes
+; everything else that lands on the darkened region stop here instead of reaching the world.
+[node name="Backdrop" type="ColorRect" parent="."]
 mouse_filter = 0
+color = Color(0, 0, 0, 0.45)
 
 [node name="Portrait" type="TextureRect" parent="."]
 custom_minimum_size = Vector2(96, 96)

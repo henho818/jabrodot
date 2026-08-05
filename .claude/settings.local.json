@@ -47,7 +47,8 @@
       "Bash(mv PatrolPathGizmoEditorPlugin.cs.uid NavPathGizmoEditorPlugin.cs.uid)",
       "Bash(grep -v '\\\\.uid$')",
       "Bash(/home/henix/godot/Godot_v4.7-stable_mono_linux_arm64/Godot_v4.7-stable_mono_linux.arm64 --headless --path . --script /tmp/claude-1000/-run-media-henix-shared-hd-Projects-jabrodot-Jabroni-Godot/eda0f02b-1297-46c2-96f9-3a79003887a5/scratchpad/test_navpath.gd)",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "Bash(git fetch *)"
     ]
   }
 }

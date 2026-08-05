@@ -10,7 +10,9 @@ namespace Jabroni.UI.Dialog;
 /// typing sound every couple of non-whitespace characters (matching the source project's
 /// TextAnimator: CharsPerSecond 16.7, a sound every 2 chars, silence on whitespace). Reveal
 /// speed is scaled live by SettingsService.DialogPlaybackSpeedFactor so the speed hotkeys take
-/// effect mid-line, not just on the next line.
+/// effect mid-line, not just on the next line. <see cref="FastReveal"/> collapses the whole line
+/// into one character's worth of time, silently, for the lines after a player clicks through a
+/// cascade.
 ///
 /// Sizing deliberately does NOT use RichTextLabel's own fit_content: that measures the full
 /// underlying Text regardless of VisibleCharacters, so the box would jump straight to its final
@@ -32,6 +34,26 @@ public partial class TextAnimator : RichTextLabel
 
     private const float BaseCharsPerSecond = 16.7f;
     private const int CharsPerSoundTrigger = 2;
+
+    /// <summary>
+    /// Reveals the whole line in the time one character normally takes, rather than a character at
+    /// a time. DialogBox turns this on for every line still to come once the player clicks through
+    /// one mid-reveal: that click says they are done waiting, and letting the rest keep typing at
+    /// reading pace leaves them with choices they can see but daren't click, since a click on a
+    /// choice picks it. Reveals this way are silent -- see <see cref="AdvanceReveal"/>.
+    /// </summary>
+    public bool FastReveal { get; set; }
+
+    /// <summary>Live reveal-speed multiplier from the settings hotkeys.</summary>
+    private static float SpeedFactor => SettingsService.Instance?.DialogPlaybackSpeedFactor ?? 1f;
+
+    /// <summary>
+    /// How long one character normally takes to appear, at the current playback speed -- and so
+    /// the whole budget a <see cref="FastReveal"/> line gets. Also what the box move ahead of such
+    /// a line is given, since the cascade's ordinary quarter-second settle would otherwise set the
+    /// pace and make the faster typing pointless.
+    /// </summary>
+    public static float CharacterDuration => 1f / (BaseCharsPerSecond * SpeedFactor);
 
     /// <summary>
     /// How long the box takes to settle on a new width. Doubles as how far ahead the row count is
@@ -239,10 +261,13 @@ public partial class TextAnimator : RichTextLabel
 
     private void AdvanceReveal(double delta)
     {
-        float speedFactor = SettingsService.Instance?.DialogPlaybackSpeedFactor ?? 1f;
         int previouslyShown = Mathf.Min((int)_charsRevealed, _totalChars);
 
-        float charsPerSecond = BaseCharsPerSecond * speedFactor;
+        // A fast reveal spends one character's worth of time on the whole line, so its rate is the
+        // ordinary one multiplied by however many characters there are to get through. That also
+        // pushes `anticipated` below straight to the end, so the box opens to the line's full
+        // height on the first frame instead of unrolling a row at a time under it.
+        float charsPerSecond = BaseCharsPerSecond * SpeedFactor * (FastReveal ? _totalChars : 1);
         _charsRevealed += charsPerSecond * (float)delta;
 
         int shown = Mathf.Min((int)_charsRevealed, _totalChars);
@@ -255,7 +280,10 @@ public partial class TextAnimator : RichTextLabel
 
         UpdateRevealedSize(shown, anticipated);
 
-        if (shown > previouslyShown)
+        // Silent while fast-revealing. The typing sound is pegged to characters appearing, so at
+        // this rate it stops reading as typing and turns into a burst of noise per line -- and the
+        // player has just said they want the text out of the way, not narrated faster.
+        if (shown > previouslyShown && !FastReveal)
         {
             string parsedText = GetParsedText();
             for (int i = previouslyShown; i < shown && i < parsedText.Length; i++)

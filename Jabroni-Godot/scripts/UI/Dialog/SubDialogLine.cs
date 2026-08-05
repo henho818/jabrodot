@@ -9,6 +9,15 @@ public partial class SubDialogLine : PanelContainer
     [Signal]
     public delegate void AdvanceRequestedEventHandler();
 
+    /// <summary>
+    /// Raised instead of <see cref="AdvanceRequestedEventHandler"/> when the click lands on a line
+    /// that is still typing. The skip itself is left to DialogBox rather than done here, so the
+    /// rest of the cascade can be put into fast reveal first -- finishing this line restarts the
+    /// cascade immediately, and by then the mode has to already be set.
+    /// </summary>
+    [Signal]
+    public delegate void SkipRequestedEventHandler();
+
     private TextAnimator _textAnimator;
     private string _fullText;
 
@@ -52,6 +61,19 @@ public partial class SubDialogLine : PanelContainer
         _textAnimator.SetPitch(typingPitchScale);
     }
 
+    /// <summary>Whether this line reveals a character at a time or all at once -- see <see cref="TextAnimator.FastReveal"/>.</summary>
+    public bool FastReveal
+    {
+        get => _textAnimator.FastReveal;
+        set => _textAnimator.FastReveal = value;
+    }
+
+    /// <summary>Drops the rest of this line on screen at once, completing its reveal.</summary>
+    public void SkipTyping()
+    {
+        _textAnimator.SkipToEnd();
+    }
+
     /// <summary>Starts the typewriter reveal, invoking onComplete once it finishes (or is skipped).</summary>
     public void PlayTyping(Action onComplete)
     {
@@ -74,7 +96,7 @@ public partial class SubDialogLine : PanelContainer
 
         if (_textAnimator.IsAnimating)
         {
-            _textAnimator.SkipToEnd();
+            EmitSignal(SignalName.SkipRequested);
         }
         else
         {

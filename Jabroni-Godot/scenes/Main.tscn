@@ -93,6 +93,12 @@ radius = 35.0
 [sub_resource type="SphereShape3D" id="SphereShape3D_shark_vision"]
 radius = 21.0
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1nqs0"]
+albedo_color = Color(0.4704498, 0.18198991, 0.6211879, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1iba3"]
+albedo_color = Color(0.16641787, 0.6175957, 0.4242342, 1)
+
 [node name="Main" type="Node3D" unique_id=821709867]
 script = ExtResource("4_click")
 
@@ -474,13 +480,19 @@ transform = Transform3D(-0.6306913, 0, 0.77603376, 0, 1, 0, -0.77603376, 0, -0.6
 [node name="AgentAI" parent="Narrator" index="0" unique_id=2100165297]
 ChatDialogId = "D.Intro"
 
+[node name="MeshInstance3D" parent="Narrator" index="1" unique_id=252819915]
+surface_material_override/0 = SubResource("StandardMaterial3D_1nqs0")
+
 [node name="NPC2" parent="." unique_id=899351124 instance=ExtResource("11_bb450")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, 2.1956944, 11.836643)
 
 [node name="AgentAI" parent="NPC2" index="0" unique_id=2100165297 node_paths=PackedStringArray("PatrolPath")]
-PatrolPath = NodePath("../../NPC-PatrolPath")
+PatrolPath = NodePath("../../NPC-PatrolPath2")
 ChatDialogId = "D.Charity"
 metadata/PatrolPath = NodePath("../../NPC-PatrolPath")
+
+[node name="MeshInstance3D" parent="NPC2" index="1" unique_id=252819915]
+surface_material_override/0 = SubResource("StandardMaterial3D_1iba3")
 
 [node name="NPC-PatrolPath2" type="Node3D" parent="." unique_id=1547168980]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.73058, 0.9, 22.83878)

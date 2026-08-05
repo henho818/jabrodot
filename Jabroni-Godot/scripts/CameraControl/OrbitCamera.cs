@@ -52,28 +52,41 @@ public partial class OrbitCamera : Node3D
         }
     }
 
+    /// <summary>
+    /// Zoom runs off unhandled input rather than polling Input.IsActionJustPressed each frame, so
+    /// that the UI can outrank it -- a notch the dialog box has already scrolled with is marked
+    /// handled and never arrives here.
+    /// <para>
+    /// Polling could not be made to respect that: the Input singleton's action state is set from
+    /// the raw event regardless of who consumed it, so a scroll over the dialog would move the
+    /// lines and zoom the world on the same notch no matter what the UI did with the event.
+    /// </para>
+    /// </summary>
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        int steps = 0;
+
+        if (@event.IsActionPressed(InputActions.CameraZoomIn))
+        {
+            steps--;
+        }
+
+        if (@event.IsActionPressed(InputActions.CameraZoomOut))
+        {
+            steps++;
+        }
+
+        if (steps == 0)
+        {
+            return;
+        }
+
+        _targetDistance = Mathf.Clamp(_targetDistance + (steps * ZoomStep), MinDistance, MaxDistance);
+        AnimateZoomTo(_targetDistance);
+    }
+
     public override void _Process(double delta)
     {
-        bool zoomChanged = false;
-
-        if (Input.IsActionJustPressed(InputActions.CameraZoomIn))
-        {
-            _targetDistance -= ZoomStep;
-            zoomChanged = true;
-        }
-
-        if (Input.IsActionJustPressed(InputActions.CameraZoomOut))
-        {
-            _targetDistance += ZoomStep;
-            zoomChanged = true;
-        }
-
-        if (zoomChanged)
-        {
-            _targetDistance = Mathf.Clamp(_targetDistance, MinDistance, MaxDistance);
-            AnimateZoomTo(_targetDistance);
-        }
-
         ApplyDistance();
 
         if (FollowTarget != null)

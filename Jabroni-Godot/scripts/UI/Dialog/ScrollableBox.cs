@@ -50,21 +50,29 @@ public partial class ScrollableBox : Control
     public float DragDeadzone { get; set; } = 8f;
 
     /// <summary>
-    /// How far above the box the invisible touch area reaches. It always spans the full viewport
+    /// How far past the dialog's own extent the backdrop reaches. It always spans the full viewport
     /// width and runs to the bottom of the screen, so the misses this is really for -- a thumb
     /// landing beside a narrow line, or in the margin below the box -- are covered regardless.
     /// </summary>
     [Export(PropertyHint.Range, "0,200,1,or_greater")]
-    public float TouchAreaMargin { get; set; } = 24f;
+    public float BackdropMargin { get; set; } = 24f;
 
-    /// <summary>Tints the touch area so its extent can be seen while tuning it. Off in play.</summary>
+    /// <summary>
+    /// Tint painted over the world behind the dialog. Its rect is exactly the region that swallows
+    /// pointer input, so darkening it is what tells the player where clicks stop reaching the world
+    /// -- keep it visible enough to read as a boundary.
+    /// </summary>
     [Export]
-    public bool ShowTouchArea { get; set; }
+    public Color BackdropColor { get; set; } = new(0f, 0f, 0f, 0.45f);
+
+    /// <summary>How far one wheel notch scrolls the box, in pixels.</summary>
+    [Export(PropertyHint.Range, "1,200,1,or_greater")]
+    public float WheelScrollStep { get; set; } = 48f;
 
     private ScrollContainer _mask;
     private DialogBox _dialogBox;
     private TextureRect _portrait;
-    private Control _touchArea;
+    private ColorRect _backdrop;
 
     // Drag-to-scroll state. _dragCandidate spans the whole press; _dragging only turns on once
     // the deadzone is beaten, and is what decides whether the release is a tap or a drag's end.
@@ -107,13 +115,13 @@ public partial class ScrollableBox : Control
         _mask = GetNode<ScrollContainer>("Mask");
         _dialogBox = GetNode<DialogBox>("Mask/DialogBox");
         _portrait = GetNode<TextureRect>("Portrait");
-        _touchArea = GetNode<Control>("TouchArea");
+        _backdrop = GetNode<ColorRect>("Backdrop");
 
         _dialogBox.Host = this;
         _dialogBox.PortraitChanged += OnPortraitChanged;
 
         _portrait.Visible = false;
-        _touchArea.Visible = false;
+        _backdrop.Visible = false;
     }
 
     public override void _Process(double delta)
@@ -121,7 +129,7 @@ public partial class ScrollableBox : Control
         if (!_dialogBox.Visible)
         {
             _portrait.Visible = false;
-            _touchArea.Visible = false;
+            _backdrop.Visible = false;
             return;
         }
 
@@ -138,19 +146,35 @@ public partial class ScrollableBox : Control
         _mask.Position = new Vector2((viewportSize.X - width) / 2f, topY);
         _mask.Size = new Vector2(width, height);
 
+        // Placed before the backdrop is sized, because the backdrop has to reach up over it. The
+        // portrait is mouse_filter IGNORE and sits a good way above the box (PortraitGap plus its
+        // own height), so any part of it the backdrop doesn't reach is a hole a click drops
+        // straight through to ClickToMove -- which is what made clicking a speaker's face walk the
+        // avatar off mid-conversation.
+        float dialogTop = topY;
+
+        if (_portrait.Visible)
+        {
+            Vector2 portraitSize = _portrait.CustomMinimumSize;
+            _portrait.Position = new Vector2(
+                (viewportSize.X - portraitSize.X) / 2f,
+                topY - PortraitGap - portraitSize.Y);
+
+            dialogTop = _portrait.Position.Y;
+        }
+
         // The mask is only as big as the text, which is a small target for a thumb -- and a press
         // that lands beside it, or in the margin below it, reaches ClickToMove and walks the
-        // avatar off instead of scrolling. This is the catcher for those: it takes the press so
-        // nothing downstream sees it, and it is what the drag handler tests against, so a swipe
-        // starting next to the box scrolls it as readily as one starting on the text.
-        _touchArea.Visible = true;
-        _touchArea.Position = new Vector2(0f, Mathf.Max(0f, topY - TouchAreaMargin));
-        _touchArea.Size = new Vector2(viewportSize.X, viewportSize.Y - _touchArea.Position.Y);
-
-        if (ShowTouchArea)
-        {
-            QueueRedraw();
-        }
+        // avatar off instead of scrolling. This is the catcher for those: MOUSE_FILTER_STOP, so it
+        // takes the press and nothing downstream sees it, and it is what the drag handler tests
+        // against, so a swipe starting next to the box scrolls it as readily as one starting on
+        // the text. Painting it is the other half of the job -- the darkened band is the player's
+        // only cue for where clicks stop reaching the world, so its rect and the blocked region
+        // are deliberately the same rect rather than two that have to be kept in agreement.
+        _backdrop.Visible = true;
+        _backdrop.Color = BackdropColor;
+        _backdrop.Position = new Vector2(0f, Mathf.Max(0f, dialogTop - BackdropMargin));
+        _backdrop.Size = new Vector2(viewportSize.X, viewportSize.Y - _backdrop.Position.Y);
 
         _maxScroll = Mathf.Max(0f, contentSize.Y - height);
 
@@ -174,14 +198,6 @@ public partial class ScrollableBox : Control
 
         _lastDisplayedBottom = _displayedBottom;
         _lastContentHeight = contentSize.Y;
-
-        if (_portrait.Visible)
-        {
-            Vector2 portraitSize = _portrait.CustomMinimumSize;
-            _portrait.Position = new Vector2(
-                (viewportSize.X - portraitSize.X) / 2f,
-                topY - PortraitGap - portraitSize.Y);
-        }
     }
 
     // Drag-to-scroll has to be read here rather than in _GuiInput, because by the time GUI input
@@ -207,13 +223,13 @@ public partial class ScrollableBox : Control
         // default), so finger and pointer share one code path instead of two that must agree.
         if (@event is InputEventScreenTouch touch)
         {
-            SwallowInsideTouchArea(touch.Position);
+            SwallowInsideBackdrop(touch.Position);
             return;
         }
 
         if (@event is InputEventScreenDrag screenDrag)
         {
-            SwallowInsideTouchArea(screenDrag.Position);
+            SwallowInsideBackdrop(screenDrag.Position);
             return;
         }
 
@@ -233,13 +249,7 @@ public partial class ScrollableBox : Control
     {
         if (button.ButtonIndex is MouseButton.WheelUp or MouseButton.WheelDown)
         {
-            // Left for ScrollContainer to actually scroll -- this only notes that the player has
-            // taken over, so the pin stops fighting the wheel.
-            if (IsInsideTouchArea(button.Position))
-            {
-                _userScrolled = true;
-            }
-
+            HandleWheel(button);
             return;
         }
 
@@ -251,7 +261,7 @@ public partial class ScrollableBox : Control
         if (button.Pressed)
         {
             // Nothing to drag when the content already fits, so every press is a tap.
-            _dragCandidate = _maxScroll > 0f && IsInsideTouchArea(button.Position);
+            _dragCandidate = _maxScroll > 0f && IsInsideBackdrop(button.Position);
             _dragging = false;
             _pressPosition = button.Position;
             _lastDragY = button.Position.Y;
@@ -267,6 +277,51 @@ public partial class ScrollableBox : Control
         {
             GetViewport().SetInputAsHandled();
         }
+    }
+
+    /// <summary>
+    /// Scrolls the box on the wheel and takes the event with it. Both halves matter. Doing the
+    /// scroll here instead of leaving it to the ScrollContainer means the whole touch area
+    /// answers the wheel, not just the narrow strip of text -- the same reason the drag handler
+    /// tests against that area. Marking it handled is what stops the notch travelling on to
+    /// OrbitCamera and zooming the world out behind the dialog on the same flick.
+    /// <para>
+    /// Being over the backdrop is the whole test -- a box with nothing left to scroll still claims
+    /// the notch and does nothing with it. The rule the player learns is one rule, "the darkened
+    /// region is the dialog's, not the world's", and it has to hold for every pointer input alike
+    /// or it isn't a rule they can rely on. Letting a short dialog pass the wheel through would
+    /// make the world zoom under the cursor depending on how many lines happened to be on screen,
+    /// which is exactly the kind of state-dependent input this backdrop exists to get rid of.
+    /// </para>
+    /// </summary>
+    private void HandleWheel(InputEventMouseButton button)
+    {
+        if (!IsInsideBackdrop(button.Position))
+        {
+            return;
+        }
+
+        if (button.Pressed && _maxScroll > 0f)
+        {
+            // Factor is how far a high-resolution wheel or trackpad actually turned; an ordinary
+            // notch reports 1.
+            float notches = button.Factor > 0f ? button.Factor : 1f;
+            float direction = button.ButtonIndex == MouseButton.WheelUp ? -1f : 1f;
+
+            _dragScroll = Mathf.Clamp(
+                _mask.ScrollVertical + (direction * notches * WheelScrollStep),
+                0f,
+                _maxScroll);
+            _mask.ScrollVertical = Mathf.RoundToInt(_dragScroll);
+
+            // As with a drag: taking the scrollbar by hand suspends the follow-the-bottom pin
+            // until the player returns to the bottom themselves.
+            _userScrolled = true;
+        }
+
+        // Godot sends a press and a release for every notch. The release is swallowed too, so
+        // nothing downstream ever sees half a notch and tries to act on it.
+        GetViewport().SetInputAsHandled();
     }
 
     private void HandleDragMotion(InputEventMouseMotion motion)
@@ -295,23 +350,37 @@ public partial class ScrollableBox : Control
         GetViewport().SetInputAsHandled();
     }
 
-    private void SwallowInsideTouchArea(Vector2 position)
+    private void SwallowInsideBackdrop(Vector2 position)
     {
-        if (IsInsideTouchArea(position))
+        if (IsInsideBackdrop(position))
         {
             GetViewport().SetInputAsHandled();
         }
     }
 
     /// <summary>
-    /// Whether a viewport-space pointer position is over the touch area. Goes through the canvas
+    /// Whether a viewport-space pointer position lands on the dialog -- i.e. on the darkened
+    /// backdrop, which the player is being shown as the region that belongs to the dialog rather
+    /// than to the world. False whenever no dialog is up.
+    /// <para>
+    /// Public so <c>ClickToMove</c> can refuse such a point outright. The backdrop being
+    /// MOUSE_FILTER_STOP already stops a press reaching unhandled input, so that check is a second
+    /// line of defence rather than the mechanism -- it costs a rect test and makes the block hold
+    /// for any caller that arrives at a screen point some other way than GUI dispatch.
+    /// </para>
+    /// </summary>
+    public bool BlocksPointer(Vector2 viewportPosition)
+        => _backdrop != null && _backdrop.Visible && IsInsideBackdrop(viewportPosition);
+
+    /// <summary>
+    /// Whether a viewport-space pointer position is over the backdrop. Goes through the canvas
     /// transform rather than comparing against GetGlobalRect() directly, so it still holds if the
     /// UI's CanvasLayer is ever offset or scaled.
     /// </summary>
-    private bool IsInsideTouchArea(Vector2 viewportPosition)
+    private bool IsInsideBackdrop(Vector2 viewportPosition)
     {
-        Vector2 local = _touchArea.GetGlobalTransformWithCanvas().AffineInverse() * viewportPosition;
-        return new Rect2(Vector2.Zero, _touchArea.Size).HasPoint(local);
+        Vector2 local = _backdrop.GetGlobalTransformWithCanvas().AffineInverse() * viewportPosition;
+        return new Rect2(Vector2.Zero, _backdrop.Size).HasPoint(local);
     }
 
     /// <summary>
@@ -399,8 +468,13 @@ public partial class ScrollableBox : Control
     /// Moves the box onto a newly-reserved line -- growing upward while there is room, scrolling
     /// once there isn't -- then invokes onComplete so the line can start typing. Growth and
     /// typing stay two distinct, sequenced beats rather than happening on top of each other.
+    /// <para>
+    /// <paramref name="duration"/> overrides <see cref="VerticalEaseDuration"/> for this one move.
+    /// A fast-revealed cascade passes the same budget it gives the typing, so the box keeps step
+    /// with the text instead of holding each line back for a quarter of a second first.
+    /// </para>
     /// </summary>
-    public void SettleForNewLine(Action onComplete)
+    public void SettleForNewLine(Action onComplete, float? duration = null)
     {
         _settleTween?.Kill();
         _settling = true;
@@ -410,7 +484,7 @@ public partial class ScrollableBox : Control
             Callable.From<float>(bottom => _displayedBottom = bottom),
             _displayedBottom,
             _dialogBox.ContentSize.Y,
-            VerticalEaseDuration);
+            Mathf.Max(0f, duration ?? VerticalEaseDuration));
         _settleTween.TweenCallback(Callable.From(() =>
         {
             // Hand _displayedBottom back to _Process before typing starts, so the line can keep
@@ -426,17 +500,4 @@ public partial class ScrollableBox : Control
         _portrait.Visible = texture != null;
     }
 
-    /// <summary>
-    /// Paints the touch area when <see cref="ShowTouchArea"/> is on, so its extent can be seen
-    /// while tuning the margin. Drawn from here rather than by the TouchArea node itself, which
-    /// is a plain scriptless Control -- this node is anchored to the whole viewport, so its
-    /// child's Position/Size are already the rect to paint.
-    /// </summary>
-    public override void _Draw()
-    {
-        if (ShowTouchArea && _touchArea != null && _touchArea.Visible)
-        {
-            DrawRect(new Rect2(_touchArea.Position, _touchArea.Size), new Color(0f, 0.6f, 1f, 0.12f));
-        }
-    }
 }
