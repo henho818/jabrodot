@@ -3,7 +3,9 @@ using Godot;
 namespace Jabroni.Triggers.Handlers;
 
 /// <summary>
-/// Swaps the running scene for another one -- a cave mouth, a doorway, a level exit.
+/// Swaps the running scene for another one -- a cave mouth, a doorway, a level exit. This is what
+/// an <see cref="AreaTrigger"/> set to Type = Scene Load builds for itself; place one by hand only
+/// when several triggers should share it.
 /// <para>
 /// The swap is deferred: this runs inside the physics server's overlap callback, and freeing the
 /// scene tree from in there is exactly what ChangeSceneToFile's own "deferred" contract exists to

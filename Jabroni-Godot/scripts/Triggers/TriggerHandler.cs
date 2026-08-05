@@ -3,9 +3,10 @@ using Godot;
 namespace Jabroni.Triggers;
 
 /// <summary>
-/// What actually happens when an <see cref="AreaTrigger"/> fires. Attach a concrete subclass
-/// (e.g. <see cref="Handlers.TriggerHandler_Dialogue"/>) to a node in the scene and drag that node
-/// into the trigger's Handler slot.
+/// What actually happens when an <see cref="AreaTrigger"/> fires. The trigger's Type dropdown
+/// builds one of these for itself where a behaviour exists (Dialogue, Scene Load); this is the
+/// route for everything else -- attach a concrete subclass to a node in the scene and drag that
+/// node into the trigger's Handler slot, which is called in addition to the built-in one.
 /// <para>
 /// A Node3D rather than a Resource or a plain object because handlers usually care where they are:
 /// the door they open, the camera anchor a cutscene starts from, the prop they animate. One handler

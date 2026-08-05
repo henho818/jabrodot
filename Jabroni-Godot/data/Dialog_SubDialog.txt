@@ -17,3 +17,4 @@ S.TestScroll5	LD.TestScroll5	NPC_speech	D.TestThought			2
 S.TestScroll6	LD.TestScroll6	NPC_speech	<end>			2
 S.Charity	LD.Charity	NPC_speech	D.CharityAward			2
 S.CharityAward	LD.CharityAward	narrator	<end>	copper1		1
+S.WaterEdge	LD.WaterEdge	narrator	<end>			1
