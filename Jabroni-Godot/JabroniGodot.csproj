@@ -3,5 +3,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>Jabroni</RootNamespace>
+    <!-- Godot reads this XML to fill in Inspector tooltips for [Export] members, so the
+         doc comments on the scripts actually reach the editor. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- ...without demanding a doc comment on every public member in the project. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 </Project>
