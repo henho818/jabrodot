@@ -29,7 +29,7 @@ GameBootstrap="*res://scripts/Core/GameBootstrap.cs"
 
 [display]
 
-window/size/viewport_width=720
+window/size/viewport_width=1600
 window/size/viewport_height=1200
 
 [dotnet]
