@@ -22,4 +22,5 @@ Thumbs.db
 # Editor-specific
 .vscode/
 .idea/
+.claude/
 *.sln.iml
