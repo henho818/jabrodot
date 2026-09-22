@@ -11,8 +11,12 @@ public static class DialogSchema
     /// <summary>A SubDialog's Next value meaning "close the box" rather than "jump to this Dialog".</summary>
     public const string EndCommand = "<end>";
 
-    /// <summary>Locales that Localization.tsv is expected to carry a column for.</summary>
-    public static readonly string[] Locales = { "en", "zh", "ja", "es" };
+    /// <summary>
+    /// Locales that Localization.tsv is expected to carry a column for, as ISO 639-1 codes --
+    /// the same names TranslationServer wants, so LocalizationBootstrap can hand each column
+    /// straight to a Translation without a lookup table in between.
+    /// </summary>
+    public static readonly string[] Locales = { "en", "zh", "ja", "es", "ru", "fr" };
 
     /// <summary>The locale used for preview text in editor tooling.</summary>
     public const string PreviewLocale = "en";
@@ -28,10 +32,16 @@ public static class DialogSchema
     /// <summary>
     /// The fixed SubDialog slots on a Dialog row, in cascade order. A Dialog shows at most this
     /// many lines; empty slots are skipped rather than treated as a terminator.
+    /// <para>
+    /// Widening this is half the change: Dialog_Dialog.txt's header has to gain the matching
+    /// columns too, because TsvDocument takes its column set from the file and silently drops a
+    /// write to a column the header doesn't have.
+    /// </para>
     /// </summary>
     public static readonly string[] SubDialogSlotColumns =
     {
-        "SubDialogID0", "SubDialogID1", "SubDialogID2", "SubDialogID3", "SubDialogID4", "SubDialogID5"
+        "SubDialogID0", "SubDialogID1", "SubDialogID2", "SubDialogID3", "SubDialogID4",
+        "SubDialogID5", "SubDialogID6", "SubDialogID7", "SubDialogID8", "SubDialogID9"
     };
 
     // Dialog_SubDialog.txt

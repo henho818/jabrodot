@@ -43,6 +43,12 @@ public partial class DialogBox : Control
     private PackedScene _lineScene;
     private readonly List<SubDialogLine> _activeLines = new();
 
+    /// <summary>
+    /// Set for the rest of the current cascade once the player clicks through a line that is still
+    /// typing, and cleared by the next dialog. See <see cref="OnLineSkipRequested"/>.
+    /// </summary>
+    private bool _fastReveal;
+
     /// <summary>How much room the lines currently want -- what the host sizes and scrolls against.</summary>
     public Vector2 ContentSize => _stack?.GetCombinedMinimumSize() ?? Vector2.Zero;
 
@@ -89,6 +95,10 @@ public partial class DialogBox : Control
         ClearLines();
         UpdatePortrait(dialogRow);
         BuildLines(dialogRow);
+
+        // A new dialog is new text to read, so it starts at reading pace again -- the previous
+        // one's hurry-up shouldn't carry over and flash its first line past the player.
+        _fastReveal = false;
 
         Visible = true;
         StartCascadeFrom(0, slide: false);
@@ -146,6 +156,7 @@ public partial class DialogBox : Control
             line.Setup(localizedText, bg, textColor, next, itemAward, pitchScale);
             line.Visible = false;
             line.AdvanceRequested += () => OnLineAdvanceRequested(line);
+            line.SkipRequested += () => OnLineSkipRequested(line);
 
             _activeLines.Add(line);
         }
@@ -155,6 +166,11 @@ public partial class DialogBox : Control
     // transition) snaps into place -- there's no prior box to move from. Every later line in
     // the same cascade reserves its row height and waits for the host's resulting settle --
     // growing the box, or scrolling it once capped -- to finish before typing starts.
+    //
+    // Once _fastReveal is on, both of those beats shrink to one character's worth of time apiece:
+    // the settle is given the same budget as the typing, since leaving it at its usual quarter of
+    // a second would have the box, not the text, deciding how long the player waits. The cascade
+    // is still a cascade -- lines arrive one after another, just several times a second.
     private void StartCascadeFrom(int index, bool slide = true)
     {
         if (index >= _activeLines.Count)
@@ -164,16 +180,37 @@ public partial class DialogBox : Control
 
         var line = _activeLines[index];
         line.Visible = true;
+        line.FastReveal = _fastReveal;
 
         if (slide && Host != null)
         {
-            Host.SettleForNewLine(() => line.PlayTyping(() => StartCascadeFrom(index + 1)));
+            float? settleDuration = _fastReveal ? TextAnimator.CharacterDuration : null;
+            Host.SettleForNewLine(() => line.PlayTyping(() => StartCascadeFrom(index + 1)), settleDuration);
         }
         else
         {
             Host?.SnapToContent();
             line.PlayTyping(() => StartCascadeFrom(index + 1));
         }
+    }
+
+    /// <summary>
+    /// Handles a click on a line that is still typing: finishes that line at once, as it always
+    /// has, and puts every line still to come into fast reveal.
+    /// <para>
+    /// The click is read as "stop making me wait", so it applies to the whole rest of the cascade
+    /// rather than just the line under the cursor. Waiting is worse here than it looks: the lines
+    /// that follow a statement are usually the choices, and clicking one of those to hurry it
+    /// along picks it instead -- so without this the player has no way to skip ahead that doesn't
+    /// also answer for them.
+    /// </para>
+    /// </summary>
+    private void OnLineSkipRequested(SubDialogLine line)
+    {
+        // Before the skip, not after: finishing the line runs the cascade straight on to the next
+        // one, which reads _fastReveal as it starts.
+        _fastReveal = true;
+        line.SkipTyping();
     }
 
     private void OnLineAdvanceRequested(SubDialogLine line)

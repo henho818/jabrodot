@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using Godot;
 using Jabroni.Settings;
 
@@ -9,7 +10,9 @@ namespace Jabroni.UI.Dialog;
 /// typing sound every couple of non-whitespace characters (matching the source project's
 /// TextAnimator: CharsPerSecond 16.7, a sound every 2 chars, silence on whitespace). Reveal
 /// speed is scaled live by SettingsService.DialogPlaybackSpeedFactor so the speed hotkeys take
-/// effect mid-line, not just on the next line.
+/// effect mid-line, not just on the next line. <see cref="FastReveal"/> collapses the whole line
+/// into one character's worth of time, silently, for the lines after a player clicks through a
+/// cascade.
 ///
 /// Sizing deliberately does NOT use RichTextLabel's own fit_content: that measures the full
 /// underlying Text regardless of VisibleCharacters, so the box would jump straight to its final
@@ -31,6 +34,26 @@ public partial class TextAnimator : RichTextLabel
 
     private const float BaseCharsPerSecond = 16.7f;
     private const int CharsPerSoundTrigger = 2;
+
+    /// <summary>
+    /// Reveals the whole line in the time one character normally takes, rather than a character at
+    /// a time. DialogBox turns this on for every line still to come once the player clicks through
+    /// one mid-reveal: that click says they are done waiting, and letting the rest keep typing at
+    /// reading pace leaves them with choices they can see but daren't click, since a click on a
+    /// choice picks it. Reveals this way are silent -- see <see cref="AdvanceReveal"/>.
+    /// </summary>
+    public bool FastReveal { get; set; }
+
+    /// <summary>Live reveal-speed multiplier from the settings hotkeys.</summary>
+    private static float SpeedFactor => SettingsService.Instance?.DialogPlaybackSpeedFactor ?? 1f;
+
+    /// <summary>
+    /// How long one character normally takes to appear, at the current playback speed -- and so
+    /// the whole budget a <see cref="FastReveal"/> line gets. Also what the box move ahead of such
+    /// a line is given, since the cascade's ordinary quarter-second settle would otherwise set the
+    /// pace and make the faster typing pointless.
+    /// </summary>
+    public static float CharacterDuration => 1f / (BaseCharsPerSecond * SpeedFactor);
 
     /// <summary>
     /// How long the box takes to settle on a new width. Doubles as how far ahead the row count is
@@ -238,10 +261,13 @@ public partial class TextAnimator : RichTextLabel
 
     private void AdvanceReveal(double delta)
     {
-        float speedFactor = SettingsService.Instance?.DialogPlaybackSpeedFactor ?? 1f;
         int previouslyShown = Mathf.Min((int)_charsRevealed, _totalChars);
 
-        float charsPerSecond = BaseCharsPerSecond * speedFactor;
+        // A fast reveal spends one character's worth of time on the whole line, so its rate is the
+        // ordinary one multiplied by however many characters there are to get through. That also
+        // pushes `anticipated` below straight to the end, so the box opens to the line's full
+        // height on the first frame instead of unrolling a row at a time under it.
+        float charsPerSecond = BaseCharsPerSecond * SpeedFactor * (FastReveal ? _totalChars : 1);
         _charsRevealed += charsPerSecond * (float)delta;
 
         int shown = Mathf.Min((int)_charsRevealed, _totalChars);
@@ -254,7 +280,10 @@ public partial class TextAnimator : RichTextLabel
 
         UpdateRevealedSize(shown, anticipated);
 
-        if (shown > previouslyShown)
+        // Silent while fast-revealing. The typing sound is pegged to characters appearing, so at
+        // this rate it stops reading as typing and turns into a burst of noise per line -- and the
+        // player has just said they want the text out of the way, not narrated faster.
+        if (shown > previouslyShown && !FastReveal)
         {
             string parsedText = GetParsedText();
             for (int i = previouslyShown; i < shown && i < parsedText.Length; i++)
@@ -272,22 +301,31 @@ public partial class TextAnimator : RichTextLabel
 
     /// <summary>
     /// Greedily breaks the text into rows no wider than the cap, so <see cref="Play"/> can bake
-    /// the breaks in as real newlines. A word wider than the cap on its own gets a row to itself
+    /// the breaks in as real newlines. A chunk wider than the cap on its own gets a row to itself
     /// and overhangs it, the same as any word-wrapping would do.
+    /// <para>
+    /// Rows are assembled from chunks rather than space-delimited words. Chinese and Japanese
+    /// don't put spaces between words, so splitting on whitespace hands back the entire line as
+    /// one unbreakable token, and it runs straight off the box no matter how narrow the cap is.
+    /// <see cref="SplitIntoChunks"/> decides where a break is permitted at all; this method only
+    /// picks which of those opportunities to take.
+    /// </para>
     /// </summary>
     private string WrapToWidth(string text, float maxWidth)
     {
         var rows = new List<string>();
         string row = "";
 
-        foreach (string word in text.Split(' '))
+        foreach (var chunk in SplitIntoChunks(text))
         {
-            string candidate = row.Length == 0 ? word : row + " " + word;
+            string candidate = row.Length == 0
+                ? chunk.Text
+                : row + (chunk.FollowsSpace ? " " : "") + chunk.Text;
 
             if (row.Length > 0 && _font.GetStringSize(candidate, HorizontalAlignment.Left, -1, _fontSize).X > maxWidth)
             {
                 rows.Add(row);
-                row = word;
+                row = chunk.Text;
             }
             else
             {
@@ -297,6 +335,94 @@ public partial class TextAnimator : RichTextLabel
 
         rows.Add(row);
         return string.Join('\n', rows);
+    }
+
+    /// <summary>A run of text that must stay on one row, and whether a dropped space preceded it.</summary>
+    private readonly record struct TextChunk(string Text, bool FollowsSpace);
+
+    /// <summary>
+    /// Cuts the text at every point a row is allowed to break, leaving pieces
+    /// <see cref="WrapToWidth"/> can treat as atomic. A space is a break whose character is
+    /// dropped (the row join puts it back); between CJK characters nearly every position is a
+    /// break, which is exactly why those scripts need no spaces to begin with.
+    /// </summary>
+    private static List<TextChunk> SplitIntoChunks(string text)
+    {
+        var chunks = new List<TextChunk>();
+        var current = new StringBuilder();
+        bool followsSpace = false;
+
+        void Flush()
+        {
+            if (current.Length > 0)
+            {
+                chunks.Add(new TextChunk(current.ToString(), followsSpace));
+                current.Clear();
+            }
+        }
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+
+            if (c == ' ')
+            {
+                Flush();
+                followsSpace = true;
+                continue;
+            }
+
+            if (current.Length > 0 && AllowsBreakBetween(text[i - 1], c))
+            {
+                Flush();
+                followsSpace = false;
+            }
+
+            current.Append(c);
+        }
+
+        Flush();
+        return chunks;
+    }
+
+    /// <summary>
+    /// Whether a row may break between two adjacent characters. Latin runs break only at spaces,
+    /// which the caller handles; anything touching a wide-script character may break, subject to
+    /// the kinsoku rules below.
+    /// </summary>
+    private static bool AllowsBreakBetween(char before, char after)
+    {
+        if (!IsWideScript(before) && !IsWideScript(after))
+        {
+            return false;
+        }
+
+        return !NoLineStart.Contains(after) && !NoLineEnd.Contains(before);
+    }
+
+    /// <summary>
+    /// Punctuation that may not open a row -- it has to stay against the character it follows,
+    /// or a line ends up starting with a stray comma. (Kinsoku shori, the same rule Japanese and
+    /// Chinese typesetting has always used.)
+    /// </summary>
+    private const string NoLineStart = "、。，．：；！？）］｝」』】〉》〕・ー々ゝゞ…‥,.:;!?)]}";
+
+    /// <summary>Punctuation that may not close a row, for the same reason in the other direction.</summary>
+    private const string NoLineEnd = "（［｛「『【〈《〔([{";
+
+    /// <summary>
+    /// Whether a character belongs to a script that breaks between characters rather than between
+    /// words -- Chinese, Japanese, Korean, and the full-width forms that travel with them.
+    /// </summary>
+    private static bool IsWideScript(char c)
+    {
+        return c is (>= '\u3000' and <= '\u303F')  // CJK symbols and punctuation
+            or (>= '\u3040' and <= '\u30FF')       // hiragana and katakana
+            or (>= '\u3400' and <= '\u4DBF')       // CJK unified ideographs, extension A
+            or (>= '\u4E00' and <= '\u9FFF')       // CJK unified ideographs
+            or (>= '\uAC00' and <= '\uD7AF')       // hangul syllables
+            or (>= '\uFF00' and <= '\uFF60')       // full-width forms
+            or (>= '\uFFE0' and <= '\uFFE6');      // full-width symbols
     }
 
     // Width uses a pure ease-out: a fixed fraction of the remaining gap per unit time, fastest on
