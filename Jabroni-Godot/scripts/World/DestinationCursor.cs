@@ -7,12 +7,22 @@ public partial class DestinationCursor : MeshInstance3D
 {
     [Export] public float Lifetime { get; set; } = 0.6f;
 
+    /// <summary>Overrides the disc's colour, for marking a click the avatar can't path to.
+    /// Left unset the scene's own colour is kept. Assign before the node enters the tree,
+    /// since _Ready reads it to start the fade.</summary>
+    public Color? Tint { get; set; }
+
     public override void _Ready()
     {
         var material = (StandardMaterial3D)GetSurfaceOverrideMaterial(0)?.Duplicate();
         if (material != null)
         {
             SetSurfaceOverrideMaterial(0, material);
+        }
+
+        if (material != null && Tint.HasValue)
+        {
+            material.AlbedoColor = Tint.Value;
         }
 
         Vector3 startScale = Scale;

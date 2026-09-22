@@ -21,7 +21,11 @@ namespace Jabroni.World;
 public partial class ClickToMove : Node3D
 {
     private const string DestinationCursorScenePath = "res://scenes/DestinationCursor.tscn";
-    private const uint ClickableMask = PhysicsLayers.Pathable | PhysicsLayers.Agent;
+    private const uint ClickableMask =
+        PhysicsLayers.Pathable | PhysicsLayers.Obstacle | PhysicsLayers.Agent;
+
+    /// <summary>Red disc for a click the avatar has no way to reach.</summary>
+    private static readonly Color BlockedTint = new(1f, 0.25f, 0.18f, 0.9f);
     private const float RayLength = 1000f;
 
     private AvatarAgentAI _avatarAi;
@@ -94,21 +98,37 @@ public partial class ClickToMove : Node3D
 
         // Ground clicks resolve against the navmesh itself rather than against collision
         // geometry, so a destination is walkable by construction instead of being a physics
-        // hit we try to repair afterwards. Clicking a rooftop, a slope too steep to have been
-        // baked, or straight through a building now simply doesn't register -- which is also
-        // what a player expects from clicking somewhere their character can't stand.
-        if (!NavMeshSnap.TryRaycast(GetWorld3D().NavigationMap, origin, rayEnd, out Vector3 destination))
+        // hit we try to repair afterwards.
+        //
+        // Obstacle is in the mask purely so a click on a building is recognised as landing on
+        // the building. Without it the pick ray passes straight through and the navmesh ray
+        // finds walkable ground on the far side, which reads to the player as the click going
+        // somewhere they didn't aim.
+        bool onObstacle = result.Count > 0
+            && (Node3D)result["collider"] is CollisionObject3D hit
+            && (hit.CollisionLayer & PhysicsLayers.Obstacle) != 0;
+
+        if (!onObstacle
+            && NavMeshSnap.TryRaycast(GetWorld3D().NavigationMap, origin, rayEnd, out Vector3 destination))
         {
+            _avatarAi.MoveToGround(destination);
+            SpawnCursor(destination);
             return;
         }
 
-        _avatarAi.MoveToGround(destination);
-        SpawnCursor(destination);
+        // Nowhere to walk: a building, a slope too steep to have baked, or open sky. Mark it
+        // in red where the world was actually struck, so a refused click still reads as a
+        // click. With nothing struck at all there's no surface to mark, so stay silent.
+        if (result.Count > 0)
+        {
+            SpawnCursor((Vector3)result["position"], BlockedTint);
+        }
     }
 
-    private void SpawnCursor(Vector3 position)
+    private void SpawnCursor(Vector3 position, Color? tint = null)
     {
-        var cursor = _destinationCursorScene.Instantiate<Node3D>();
+        var cursor = _destinationCursorScene.Instantiate<DestinationCursor>();
+        cursor.Tint = tint;
         GetTree().CurrentScene.AddChild(cursor);
         cursor.GlobalPosition = position + new Vector3(0f, 0.03f, 0f);
     }
