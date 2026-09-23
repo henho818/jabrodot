@@ -56,6 +56,22 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     [Export] public float StepProbeDistance { get; set; } = 0.5f;
 
     /// <summary>
+    /// Deepest drop the agent hops down rather than just walking off the edge. Nothing blocks
+    /// a descent, so this is found by probing ahead for ground that has fallen away -- and a
+    /// walkable ramp drops too, so only a fall steeper than the steepest ramp this body would
+    /// walk counts as a ledge. Beyond this the agent simply steps off and gravity takes it.
+    /// </summary>
+    [Export] public float StepDownHeight { get; set; } = 0.6f;
+
+    /// <summary>
+    /// How far ahead the descent lands. It has to be longer than the climb's probe: to drop,
+    /// the capsule must clear the ledge it is leaving *behind* it, not merely get its leading
+    /// edge over. Measured on a 0.4-radius capsule, 0.5 still overlapped the old surface and
+    /// read the drop as zero; 1.0 measured it exactly.
+    /// </summary>
+    [Export] public float StepDownProbeDistance { get; set; } = 1f;
+
+    /// <summary>
     /// Seconds the step-up takes to play out. The lift itself is instantaneous, so this is
     /// what turns it into a movement the player can read: the agent visibly gathers itself and
     /// hops the lip instead of gliding up it. Shorter feels brisk, longer feels deliberate and
@@ -65,12 +81,30 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     [Export] public float StepHopDuration { get; set; } = 0.5f;
 
     /// <summary>
-    /// How far above the step the hop peaks, as a multiple of the step's own height. At 1.5 the
-    /// agent rises half again as far as it needs to, then drops onto the lip -- it reads as a
-    /// jump that lands, rather than a ride up to exactly the right height. Values at or below 1
-    /// have no apex to fall from and are clamped away.
+    /// How high the arc rises above the midpoint of the hop, as a multiple of the height
+    /// difference between where it starts and where it lands. At 1 the apex sits over the
+    /// halfway point, one full height-delta above it -- so a climb and a drop of the same size
+    /// trace the same shape, and dropping doesn't fling the agent upward the way measuring the
+    /// apex from the start did.
     /// </summary>
-    [Export] public float StepHopPeakScale { get; set; } = 1.5f;
+    [Export] public float StepHopPeakScale { get; set; } = 1f;
+
+    /// <summary>
+    /// How near the body must be facing the hop before it launches, in degrees. The agent
+    /// plants, squares up to the lip and only then jumps, so the hop always goes the way it's
+    /// looking rather than being launched sideways mid-stride. Widen it for a looser, faster
+    /// wind-up; narrow it to make the agent commit to the turn.
+    /// </summary>
+    [Export] public float StepTurnTolerance { get; set; } = 5f;
+
+    /// <summary>
+    /// Seconds the agent plants before launching, even when it's already facing the right way.
+    /// Agents rotate to face their direction of travel as they walk and the hop goes that same
+    /// way, so the turn is usually satisfied on the first frame -- without a held beat there'd
+    /// be no stop to see, and the jump would read as a stumble mid-stride. This is the pause
+    /// that makes it look chosen.
+    /// </summary>
+    [Export] public float StepPlantDuration { get; set; } = 0.25f;
 
     [ExportGroup("Pathing")]
     /// <summary>
@@ -111,13 +145,37 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// refused. The rise is still capped at StepHeight afterwards.</summary>
     private const float StepClearance = 0.05f;
 
+    /// <summary>Caps the wind-up so a body that somehow never settles on its heading can't
+    /// stand there turning forever.</summary>
+    private const float StepTurnTimeout = 1f;
+
+    /// <summary>How far past a max-slope ramp's drop a descent has to fall before it counts as
+    /// a ledge worth hopping, rather than ground the agent can just walk down.</summary>
+    private const float LedgeMargin = 0.02f;
+
+    /// <summary>Spacing of the ground samples used to spot a ledge. Small, because the whole
+    /// point is to catch a drop that happens between two samples rather than across the
+    /// stride: over a long span a ledge and a ramp look identical.</summary>
+    private const float LedgeSampleSpacing = 0.1f;
+
+    private const int LedgeSampleCount = 14;
+
     private NavigationAgent3D _agent;
     private Vector3? _faceTarget;
     private Vector3 _requestedDestination;
     private Vector3 _lastProgressPosition;
     private double _stuckTimer;
     private bool _hasDestination;
-    private bool _hopping;
+    /// <summary>Plant and square up to the lip, then jump it.</summary>
+    private enum StepPhase
+    {
+        None,
+        Turning,
+        Hopping,
+    }
+
+    private StepPhase _stepPhase;
+    private double _turnElapsed;
     private double _hopElapsed;
     private Vector3 _hopFrom;
     private Vector3 _hopTo;
@@ -206,9 +264,14 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     {
         float dt = (float)delta;
 
-        // A step-up in flight owns the body outright: no steering, no gravity, no
-        // MoveAndSlide, just the scripted arc.
-        if (_hopping)
+        // A step-up in flight owns the body outright -- no path steering until it's done.
+        if (_stepPhase == StepPhase.Turning)
+        {
+            AdvanceStepTurn(dt);
+            return;
+        }
+
+        if (_stepPhase == StepPhase.Hopping)
         {
             AdvanceHop(dt);
             return;
@@ -261,12 +324,21 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         achieved.Y = 0f;
 
         // Only worth probing when the frame actually wanted to go somewhere and didn't.
-        if (StepHeight > 0f
-            && IsOnFloor()
-            && planned.LengthSquared() > 0.000001f
-            && achieved.LengthSquared() < planned.LengthSquared() * BlockedFraction * BlockedFraction)
+        if (IsOnFloor() && planned.LengthSquared() > 0.000001f)
         {
-            TryStepUp(planned);
+            bool blocked = achieved.LengthSquared()
+                < planned.LengthSquared() * BlockedFraction * BlockedFraction;
+
+            // Being stopped means something is in the way to climb; getting through freely
+            // means the only step available is one down off an edge ahead.
+            if (blocked)
+            {
+                TryStepUp(planned);
+            }
+            else
+            {
+                TryStepDown(planned);
+            }
         }
     }
 
@@ -282,6 +354,11 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// </summary>
     private bool TryStepUp(Vector3 motion)
     {
+        if (StepHeight <= 0f)
+        {
+            return false;
+        }
+
         Transform3D from = GlobalTransform;
         Vector3 lift = Vector3.Up * (StepHeight + StepClearance);
 
@@ -337,9 +414,192 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         _hopFrom = from.Origin;
         _hopTo = landingPoint;
         _hopRise = rise;
-        _hopElapsed = 0;
-        _hopping = true;
+        _turnElapsed = 0;
+        _stepPhase = StepPhase.Turning;
         return true;
+    }
+
+    /// <summary>
+    /// Hops down off a ledge the agent is about to walk over. Nothing obstructs a descent, so
+    /// unlike a step up there's no blocked frame to react to -- the drop has to be looked for.
+    /// A ramp within the body's slope limit also loses height over the same distance, so only a
+    /// fall steeper than that counts, which keeps this off ordinary sloping ground.
+    /// </summary>
+    private bool TryStepDown(Vector3 motion)
+    {
+        if (StepDownHeight <= 0f)
+        {
+            return false;
+        }
+
+        Vector3 direction = motion.Normalized();
+        Transform3D from = GlobalTransform;
+
+        if (!HasLedgeAhead(from.Origin, direction, out float toLedge, out float groundHere, out float groundBelow))
+        {
+            return false;
+        }
+
+        float drop = groundHere - groundBelow;
+        if (drop < MinStepRise || drop > StepDownHeight)
+        {
+            return false;
+        }
+
+        // Land clear of the ledge by the capsule's own reach, at the height the rays found.
+        // Deriving it this way rather than from a capsule probe matters: the capsule only
+        // measures a drop once it has cleared the edge, by which point the body is already
+        // falling and the hop never gets a chance to fire.
+        float forward = toLedge + StepDownProbeDistance;
+        var lifted = new Transform3D(from.Basis, from.Origin + (Vector3.Up * StepClearance));
+
+        // Nothing may block the way over.
+        if (TestMove(lifted, direction * forward))
+        {
+            return false;
+        }
+
+        Vector3 landingPoint = from.Origin + (direction * forward);
+        landingPoint.Y = groundBelow + (from.Origin.Y - groundHere);
+
+        _hopFrom = from.Origin;
+        _hopTo = landingPoint;
+        _hopRise = -drop;
+        _turnElapsed = 0;
+        _stepPhase = StepPhase.Turning;
+        return true;
+    }
+
+    /// <summary>
+    /// Walks a line of thin downward rays ahead of the body looking for a break in the ground.
+    /// Rays rather than the capsule, because the capsule's own width smears the edge out and
+    /// reports no drop at all; and sample by sample, because a ledge only looks different from
+    /// a walkable ramp over a short span -- measured across a whole stride the two are the
+    /// same shape.
+    /// </summary>
+    private bool HasLedgeAhead(
+        Vector3 origin, Vector3 direction, out float distance, out float groundHere, out float groundBelow)
+    {
+        distance = 0f;
+        groundHere = 0f;
+        groundBelow = 0f;
+
+        var space = GetWorld3D().DirectSpaceState;
+        var exclude = new Godot.Collections.Array<Rid> { GetRid() };
+        float rampDrop = (LedgeSampleSpacing * Mathf.Tan(FloorMaxAngle)) + LedgeMargin;
+
+        float previous = 0f;
+        bool havePrevious = false;
+
+        for (int i = 0; i <= LedgeSampleCount; i++)
+        {
+            float along = LedgeSampleSpacing * i;
+            Vector3 at = origin + (direction * along);
+            var query = PhysicsRayQueryParameters3D.Create(
+                at + (Vector3.Up * 0.1f),
+                at + (Vector3.Down * (StepDownHeight + 1f)),
+                CollisionMask);
+            query.Exclude = exclude;
+
+            var hit = space.IntersectRay(query);
+            if (hit.Count == 0)
+            {
+                // Open air below: a genuine fall, not something to hop down.
+                return false;
+            }
+
+            float groundY = ((Vector3)hit["position"]).Y;
+
+            if (i == 0)
+            {
+                groundHere = groundY;
+            }
+            else if (havePrevious && previous - groundY > rampDrop)
+            {
+                distance = along;
+                groundBelow = groundY;
+                return true;
+            }
+
+            previous = groundY;
+            havePrevious = true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Holds the body still and turns it to face the lip before the jump. Walking into a step
+    /// and hopping it in one motion reads as a stumble; stopping to square up makes the jump
+    /// look like something the agent decided to do.
+    /// </summary>
+    private void AdvanceStepTurn(float dt)
+    {
+        _turnElapsed += dt;
+
+        Vector3 heading = _hopTo - _hopFrom;
+        heading.Y = 0f;
+
+        if (heading.LengthSquared() < 0.0001f)
+        {
+            BeginHop();
+            return;
+        }
+
+        Vector3 desired = heading.Normalized();
+
+        // Full stop, still subject to gravity so the body stays planted while it turns.
+        Velocity = new Vector3(0f, IsOnFloor() ? 0f : Velocity.Y - Gravity * dt, 0f);
+        MoveAndSlide();
+
+        Basis = LocomotionMath.TurnToward(Basis, desired, RotationSpeed, dt);
+
+        // Give up on squaring up rather than stand here turning forever.
+        if (_turnElapsed >= StepTurnTimeout)
+        {
+            BeginHop();
+            return;
+        }
+
+        // Hold the plant even once aimed, so there's a beat to see.
+        if (_turnElapsed < StepPlantDuration)
+        {
+            return;
+        }
+
+        // Basis.LookingAt aims -Z down the heading, so that's the axis to measure.
+        float facing = (-Basis.Z).Normalized().Dot(desired);
+        if (facing >= Mathf.Cos(Mathf.DegToRad(StepTurnTolerance)))
+        {
+            BeginHop();
+        }
+    }
+
+    /// <summary>Launches the arc from wherever the wind-up left the body.</summary>
+    private void BeginHop()
+    {
+        _hopFrom = GlobalPosition;
+        _hopRise = _hopTo.Y - _hopFrom.Y;
+        _hopElapsed = 0;
+
+        if (Mathf.Abs(_hopRise) < MinStepRise)
+        {
+            // Settled level with the step while turning, so there's nothing to jump.
+            GlobalPosition = _hopTo;
+            EndStep();
+            return;
+        }
+
+        _stepPhase = StepPhase.Hopping;
+    }
+
+    private void EndStep()
+    {
+        _stepPhase = StepPhase.None;
+
+        // The step is progress, not a stall -- don't let it count toward giving up.
+        _lastProgressPosition = GlobalPosition;
+        _stuckTimer = 0;
     }
 
     /// <summary>Plays the step-up out as a visible arc. Lands on exactly the position the
@@ -353,12 +613,14 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         //   y(t) = v*t - g*t^2/2,  y(1) = rise,  max(y) = peak * rise
         // gives v = rise * (2k + 2*sqrt(k^2 - k)) and g = v^2 / (2*k*rise), so the apex lands
         // inside the hop instead of after it -- which is what makes the body fall onto the step.
-        float k = Mathf.Max(StepHopPeakScale, 1.01f);
-        float v = _hopRise * (2f * k + 2f * Mathf.Sqrt(k * k - k));
-        float g = v * v / (2f * k * _hopRise);
+        // Apex over the midpoint, a height-delta above it. Stated as a bump on top of the
+        // straight line between the two points, because no parabola through two points at
+        // different heights can put its own maximum at their midpoint.
+        float delta = Mathf.Abs(_hopTo.Y - _hopFrom.Y);
+        float bump = Mathf.Sin(t * Mathf.Pi) * delta * Mathf.Max(StepHopPeakScale, 0f);
 
         Vector3 position = _hopFrom.Lerp(_hopTo, t);
-        position.Y = _hopFrom.Y + (v * t) - (0.5f * g * t * t);
+        position.Y += bump;
         GlobalPosition = position;
         Velocity = Vector3.Zero;
 
@@ -368,11 +630,7 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         }
 
         GlobalPosition = _hopTo;
-        _hopping = false;
-
-        // The hop is progress, not a stall -- don't let it count toward giving up.
-        _lastProgressPosition = GlobalPosition;
-        _stuckTimer = 0;
+        EndStep();
     }
 
     /// <summary>Gives up on a destination the agent has stopped closing on, so the state
