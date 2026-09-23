@@ -162,6 +162,34 @@ surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 transform = Transform3D(10, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
 
+[node name="BrickWall0" type="StaticBody3D" parent="Village" unique_id=1342776006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.31, -0.1798544, -19.146084)
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/BrickWall0" unique_id=582285485]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, -0.27717257, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_brick")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall0" unique_id=320388591]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+shape = SubResource("BoxShape3D_6dh4k")
+debug_color = Color(0, 0.60038817, 0.70000815, 0.312)
+
+[node name="BrickWall1" type="StaticBody3D" parent="Village" unique_id=1209867123]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.31, 0.6343112, -22)
+collision_mask = 0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/BrickWall1" unique_id=161600643]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, -0.27717257, 0)
+mesh = SubResource("BoxMesh_unit")
+surface_material_override/0 = SubResource("StandardMaterial3D_brick")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall1" unique_id=217627374]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+shape = SubResource("BoxShape3D_6dh4k")
+debug_color = Color(0, 0.60038817, 0.70000815, 0.312)
+
 [node name="BrickWall2" type="StaticBody3D" parent="Village" unique_id=301191871]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.310536, 1.2686224, -24.894028)
 collision_mask = 0
@@ -172,34 +200,6 @@ mesh = SubResource("BoxMesh_unit")
 surface_material_override/0 = SubResource("StandardMaterial3D_brick")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall2" unique_id=1112039980]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
-shape = SubResource("BoxShape3D_6dh4k")
-debug_color = Color(0, 0.60038817, 0.70000815, 0.312)
-
-[node name="BrickWall3" type="StaticBody3D" parent="Village" unique_id=1342776006]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.31, -0.1798544, -19.146084)
-collision_mask = 0
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/BrickWall3" unique_id=582285485]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, -0.27717257, 0)
-mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_brick")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall3" unique_id=320388591]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
-shape = SubResource("BoxShape3D_6dh4k")
-debug_color = Color(0, 0.60038817, 0.70000815, 0.312)
-
-[node name="BrickWall" type="StaticBody3D" parent="Village" unique_id=1209867123]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.31, 0.6343112, -22)
-collision_mask = 0
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Village/BrickWall" unique_id=161600643]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, -0.27717257, 0)
-mesh = SubResource("BoxMesh_unit")
-surface_material_override/0 = SubResource("StandardMaterial3D_brick")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Village/BrickWall" unique_id=217627374]
 transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
 shape = SubResource("BoxShape3D_6dh4k")
 debug_color = Color(0, 0.60038817, 0.70000815, 0.312)
@@ -320,6 +320,11 @@ surface_material_override/0 = SubResource("StandardMaterial3D_grass_hedge")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Village/Hedge8" unique_id=1325571090]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 shape = SubResource("BoxShape3D_unit")
+
+[node name="BrickWallNavigationLink3D" type="NavigationLink3D" parent="Village" unique_id=1743947492]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.291, 0.636, -16.842873)
+start_position = Vector3(0, -0.67, 0)
+end_position = Vector3(0, 0.445, -0.975)
 
 [node name="NPC-PatrolPath" type="Node3D" parent="." unique_id=1591746689]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.73058, 0.9, -10.9519005)

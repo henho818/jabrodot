@@ -34,7 +34,6 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// </summary>
     [Export] public float MaxSlopeDegrees { get; set; } = 33f;
 
-    [ExportGroup("Step Up")]
     /// <summary>
     /// Tallest lip the body will hop rather than stop dead at. CharacterBody3D has no step
     /// handling of its own -- floor_max_angle and friends govern slopes, not steps -- so
@@ -43,6 +42,7 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// agent_max_climb). Keep it at or above the bake's agent_max_climb so the body can
     /// honour what the navmesh promised.
     /// </summary>
+    [ExportGroup("Step Up")]
     [Export] public float StepHeight { get; set; } = 0.35f;
 
     /// <summary>
@@ -106,7 +106,6 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// </summary>
     [Export] public float StepPlantDuration { get; set; } = 0.25f;
 
-    [ExportGroup("Pathing")]
     /// <summary>
     /// How far a re-issued destination has to move before it counts as a new target.
     /// NavigationAgent3D.TargetPosition forces a full repath on every assignment, even
@@ -114,6 +113,7 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// (AITask_ChaseTarget) rebuilds the path before the agent ever advances past its
     /// first point, and the agent stutters in place instead of walking.
     /// </summary>
+    [ExportGroup("Pathing")]
     [Export] public float RepathThreshold { get; set; } = 0.5f;
 
     /// <summary>
