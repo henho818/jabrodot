@@ -96,6 +96,14 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     [Export] public float StepHopPeakScale { get; set; } = 1f;
 
     /// <summary>
+    /// Height the arc is drawn as if it had, when the real one is smaller. The arc is scaled
+    /// off the height difference between the two ends, so a level traversal -- a link across a
+    /// gap, a step onto something the same height -- would otherwise have no arc at all and
+    /// slide flat. This gives it something to jump over.
+    /// </summary>
+    [Export] public float MinHopArc { get; set; } = 1.0f;
+
+    /// <summary>
     /// How near the body must be facing the hop before it launches, in degrees. The agent
     /// plants, squares up to the lip and only then jumps, so the hop always goes the way it's
     /// looking rather than being launched sideways mid-stride. Widen it for a looser, faster
@@ -120,16 +128,6 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// first point, and the agent stutters in place instead of walking.
     /// </summary>
     [ExportGroup("Pathing")]
-    /// <summary>
-    /// How far off the navmesh the body may drift before its steering stops trusting the path.
-    /// The bake erodes walkable area back from every edge by the agent radius, so the rim of
-    /// any ledge is off-mesh by design -- and from out there the next path position flips to
-    /// point back onto the mesh, which turns the agent around instead of letting it step off.
-    /// Past this distance it heads for the destination directly until it is back on solid
-    /// navmesh, which is the only way off a small platform whose whole perimeter is eroded.
-    /// </summary>
-    [Export] public float OffMeshTolerance { get; set; } = 0.35f;
-
     [Export] public float RepathThreshold { get; set; } = 0.5f;
 
     /// <summary>
@@ -179,7 +177,6 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     private NavigationAgent3D _agent;
     private Vector3? _faceTarget;
     private Vector3 _requestedDestination;
-    private Vector3 _resolvedDestination;
     private Vector3 _lastProgressPosition;
     private double _stuckTimer;
     private bool _hasDestination;
@@ -306,7 +303,6 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         }
 
         _onNavMesh = true;
-        _resolvedDestination = onMesh;
         _agent.TargetPosition = onMesh;
     }
 
@@ -351,13 +347,6 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         if (!HasArrived)
         {
             Vector3 nextPos = _onNavMesh ? _agent.GetNextPathPosition() : GlobalPosition;
-
-            // Standing off the navmesh makes the path's advice actively wrong -- it points back
-            // the way we came. Steer at the destination instead until we're on it again.
-            if (_onNavMesh && IsOffNavMesh())
-            {
-                nextPos = _resolvedDestination;
-            }
             Vector3 toNext = nextPos - GlobalPosition;
             toNext.Y = 0f;
 
@@ -655,9 +644,11 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         _hopRise = _hopTo.Y - _hopFrom.Y;
         _hopElapsed = 0;
 
-        if (Mathf.Abs(_hopRise) < MinStepRise)
+        // Distance, not height: a level link still has a gap to cross, and testing the rise
+        // alone snapped the body straight to the far end -- a teleport, not a jump.
+        if (_hopFrom.DistanceSquaredTo(_hopTo) < MinStepRise * MinStepRise)
         {
-            // Settled level with the step while turning, so there's nothing to jump.
+            // Already standing where we were going, so there's nothing to jump.
             GlobalPosition = _hopTo;
             EndStep();
             return;
@@ -689,7 +680,7 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         // Apex over the midpoint, a height-delta above it. Stated as a bump on top of the
         // straight line between the two points, because no parabola through two points at
         // different heights can put its own maximum at their midpoint.
-        float delta = Mathf.Abs(_hopTo.Y - _hopFrom.Y);
+        float delta = Mathf.Max(Mathf.Abs(_hopTo.Y - _hopFrom.Y), MinHopArc);
         float bump = Mathf.Sin(t * Mathf.Pi) * delta * Mathf.Max(StepHopPeakScale, 0f);
 
         Vector3 position = _hopFrom.Lerp(_hopTo, t);
@@ -704,21 +695,6 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
 
         GlobalPosition = _hopTo;
         EndStep();
-    }
-
-    /// <summary>True when the body has wandered off the walkable surface far enough that the
-    /// navigation path can no longer be trusted to point forwards.</summary>
-    private bool IsOffNavMesh()
-    {
-        Rid map = _agent.GetNavigationMap();
-        if (!NavMeshSnap.IsReady(map))
-        {
-            return false;
-        }
-
-        Vector3 delta = NavigationServer3D.MapGetClosestPoint(map, GlobalPosition) - GlobalPosition;
-        delta.Y = 0f;
-        return delta.LengthSquared() > OffMeshTolerance * OffMeshTolerance;
     }
 
     /// <summary>Gives up on a destination the agent has stopped closing on, so the state
