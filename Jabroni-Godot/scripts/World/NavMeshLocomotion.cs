@@ -3,6 +3,7 @@ using Godot;
 namespace Jabroni.World;
 
 /// <summary>Shared NavigationAgent3D-driven CharacterBody3D movement for avatar/NPC archetypes.</summary>
+[Tool]
 public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
 {
     /// <summary>Metres per second the agent walks at. Overwritten at startup by the agent's
@@ -56,12 +57,17 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     [Export] public float StepProbeDistance { get; set; } = 0.5f;
 
     /// <summary>
-    /// Deepest drop the agent hops down rather than just walking off the edge. Nothing blocks
-    /// a descent, so this is found by probing ahead for ground that has fallen away -- and a
-    /// walkable ramp drops too, so only a fall steeper than the steepest ramp this body would
-    /// walk counts as a ledge. Beyond this the agent simply steps off and gravity takes it.
+    /// Deepest drop the agent hops down rather than just walking off the edge. <b>0 disables
+    /// hopping down entirely</b>, which is the default: falling off a ledge already reads
+    /// fine, while every hop costs a plant plus an arc -- so on a flight of steps the agent
+    /// stops to consider each one and the descent looks like dithering rather than intent.
+    /// Climbing is the half worth animating, because that's where the body would otherwise
+    /// stop dead against the lip.
+    ///
+    /// Raise it to turn descents back on; it's the drop height in metres, and anything deeper
+    /// is walked off and left to gravity either way.
     /// </summary>
-    [Export] public float StepDownHeight { get; set; } = 0.6f;
+    [Export] public float StepDownHeight { get; set; }
 
     /// <summary>
     /// How far ahead the descent lands. It has to be longer than the climb's probe: to drop,
