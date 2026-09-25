@@ -120,6 +120,16 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// first point, and the agent stutters in place instead of walking.
     /// </summary>
     [ExportGroup("Pathing")]
+    /// <summary>
+    /// How far off the navmesh the body may drift before its steering stops trusting the path.
+    /// The bake erodes walkable area back from every edge by the agent radius, so the rim of
+    /// any ledge is off-mesh by design -- and from out there the next path position flips to
+    /// point back onto the mesh, which turns the agent around instead of letting it step off.
+    /// Past this distance it heads for the destination directly until it is back on solid
+    /// navmesh, which is the only way off a small platform whose whole perimeter is eroded.
+    /// </summary>
+    [Export] public float OffMeshTolerance { get; set; } = 0.35f;
+
     [Export] public float RepathThreshold { get; set; } = 0.5f;
 
     /// <summary>
@@ -169,6 +179,7 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     private NavigationAgent3D _agent;
     private Vector3? _faceTarget;
     private Vector3 _requestedDestination;
+    private Vector3 _resolvedDestination;
     private Vector3 _lastProgressPosition;
     private double _stuckTimer;
     private bool _hasDestination;
@@ -201,6 +212,54 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         _agent = GetNode<NavigationAgent3D>("NavigationAgent3D");
         _lastProgressPosition = GlobalPosition;
         FloorMaxAngle = Mathf.DegToRad(MaxSlopeDegrees);
+
+        // Pathfinding routes through NavigationLink3D on its own, but nothing moves the body
+        // along one -- the link's far end just arrives as another waypoint, and the agent walks
+        // into whatever stands between. This is what turns a routed link into a traversal.
+        _agent.LinkReached += OnLinkReached;
+    }
+
+    /// <summary>
+    /// Hops the agent across a navigation link it has just reached. Fires once the body is
+    /// within the agent's PathDesiredDistance of the link's near end, so the jump starts where
+    /// the link was authored rather than wherever the geometry happens to block the body.
+    ///
+    /// Both directions arc the same way. A link is a deliberate piece of level authoring, so
+    /// going down one is as much a jump as going up it.
+    /// </summary>
+    private void OnLinkReached(Godot.Collections.Dictionary details)
+    {
+        // A step already in flight owns the body; don't let a link yank it mid-arc.
+        if (_stepPhase != StepPhase.None)
+        {
+            return;
+        }
+
+        if (!details.TryGetValue("owner", out Variant owner)
+            || owner.As<GodotObject>() is not NavigationLink3D link)
+        {
+            return;
+        }
+
+        Vector3 start = link.GetGlobalStartPosition();
+        Vector3 end = link.GetGlobalEndPosition();
+
+        // Links are bidirectional by default, so which end is the exit depends on which one we
+        // walked up to. Take the far one.
+        bool fromStart = GlobalPosition.DistanceSquaredTo(start) <= GlobalPosition.DistanceSquaredTo(end);
+        Vector3 near = fromStart ? start : end;
+        Vector3 far = fromStart ? end : start;
+
+        // Link endpoints sit on the navmesh surface while the body's origin rides above its
+        // feet, so carry across however high we're currently standing over our own end rather
+        // than landing buried in the ground.
+        float standingOffset = GlobalPosition.Y - near.Y;
+
+        _hopFrom = GlobalPosition;
+        _hopTo = new Vector3(far.X, far.Y + standingOffset, far.Z);
+        _hopRise = _hopTo.Y - _hopFrom.Y;
+        _turnElapsed = 0;
+        _stepPhase = StepPhase.Turning;
     }
 
     public void MoveTo(Vector3 destination)
@@ -247,6 +306,7 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         }
 
         _onNavMesh = true;
+        _resolvedDestination = onMesh;
         _agent.TargetPosition = onMesh;
     }
 
@@ -291,6 +351,13 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
         if (!HasArrived)
         {
             Vector3 nextPos = _onNavMesh ? _agent.GetNextPathPosition() : GlobalPosition;
+
+            // Standing off the navmesh makes the path's advice actively wrong -- it points back
+            // the way we came. Steer at the destination instead until we're on it again.
+            if (_onNavMesh && IsOffNavMesh())
+            {
+                nextPos = _resolvedDestination;
+            }
             Vector3 toNext = nextPos - GlobalPosition;
             toNext.Y = 0f;
 
@@ -637,6 +704,21 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
 
         GlobalPosition = _hopTo;
         EndStep();
+    }
+
+    /// <summary>True when the body has wandered off the walkable surface far enough that the
+    /// navigation path can no longer be trusted to point forwards.</summary>
+    private bool IsOffNavMesh()
+    {
+        Rid map = _agent.GetNavigationMap();
+        if (!NavMeshSnap.IsReady(map))
+        {
+            return false;
+        }
+
+        Vector3 delta = NavigationServer3D.MapGetClosestPoint(map, GlobalPosition) - GlobalPosition;
+        delta.Y = 0f;
+        return delta.LengthSquared() > OffMeshTolerance * OffMeshTolerance;
     }
 
     /// <summary>Gives up on a destination the agent has stopped closing on, so the state

@@ -45,3 +45,7 @@ enabled=PackedStringArray("res://addons/collision_shape_gizmo/plugin.cfg", "res:
 3d_physics/layer_1="Pathable"
 3d_physics/layer_2="Obstacle"
 3d_physics/layer_3="Agent"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
