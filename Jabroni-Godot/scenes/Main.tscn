@@ -128,6 +128,7 @@ navigation_mesh = SubResource("NavigationMesh_village")
 [node name="TerrainSandbox" parent="Village" unique_id=410645259 instance=ExtResource("3_cvmbd")]
 
 [node name="Terrain3D" parent="Village/TerrainSandbox" index="0" unique_id=1162696394]
+collision_mode = 3
 collision_layer = 3
 
 [node name="Village Objects" type="Node3D" parent="Village" unique_id=1181100806]
@@ -402,6 +403,7 @@ collision_layer = 4
 collision_mask = 3
 floor_max_angle = 0.57595867
 script = ExtResource("7_navloco")
+MaxSlopeDegrees = 45.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Avatar" unique_id=1249903463]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -512,6 +514,7 @@ script = ExtResource("19_navnode")
 [node name="NPC2" parent="NPCs" unique_id=899351124 instance=ExtResource("11_bb450")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0709991, 0.0003285408, 24.402218)
 floor_max_angle = 0.57595867
+MaxSlopeDegrees = 45.0
 
 [node name="AgentAI" parent="NPCs/NPC2" index="0" unique_id=2100165297 node_paths=PackedStringArray("PatrolPath")]
 PatrolPath = NodePath("../../NPC-PatrolPath2")
@@ -552,6 +555,7 @@ script = ExtResource("19_navnode")
 [node name="NPC" parent="NPCs" unique_id=57840602 instance=ExtResource("11_bb450")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, -0.00014882162, -10.9519005)
 floor_max_angle = 0.57595867
+MaxSlopeDegrees = 45.0
 
 [node name="AgentAI" parent="NPCs/NPC" index="0" unique_id=2100165297 node_paths=PackedStringArray("PatrolPath")]
 PatrolPath = NodePath("../../NPC-PatrolPath")

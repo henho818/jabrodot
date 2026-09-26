@@ -133,6 +133,13 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     /// (AITask_ChaseTarget) rebuilds the path before the agent ever advances past its
     /// first point, and the agent stutters in place instead of walking.
     /// </summary>
+    /// <summary>
+    /// How far along the surface normal the body is placed when it's found to have crossed
+    /// into geometry. Enough to be clearly outside rather than resting exactly on the plane,
+    /// where the next depenetration could push it back in.
+    /// </summary>
+    [Export] public float SurfaceRecoveryOffset { get; set; } = 0.1f;
+
     [ExportGroup("Pathing")]
     [Export] public float RepathThreshold { get; set; } = 0.5f;
 
@@ -184,6 +191,8 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     private Vector3? _faceTarget;
     private Vector3 _requestedDestination;
     private Vector3 _lastProgressPosition;
+    private Vector3 _lastClearPosition;
+    private bool _hasClearPosition;
     private double _stuckTimer;
     private bool _hasDestination;
     /// <summary>Plant and square up to the lip, then jump it.</summary>
@@ -331,6 +340,8 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
     public override void _PhysicsProcess(double delta)
     {
         float dt = (float)delta;
+
+        RecoverIfBuried();
 
         // A step-up in flight owns the body outright -- no path steering until it's done.
         if (_stepPhase == StepPhase.Turning)
@@ -701,6 +712,60 @@ public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
 
         GlobalPosition = _hopTo;
         EndStep();
+    }
+
+    /// <summary>
+    /// Puts the body back if it has ended up inside the world.
+    ///
+    /// Godot's own sweeping stops a body crossing a surface while it moves, but it can't help
+    /// once something has placed the body inside geometry without moving it there -- and this
+    /// class does exactly that, assigning GlobalPosition directly during a hop. Terrain
+    /// collision is also built at runtime, so a surface can appear around a body. Once inside,
+    /// depenetration has no velocity history to reason from and the triangles it would push
+    /// against are behind it, so it falls straight through.
+    ///
+    /// Remembering the last position known to be clear gives that history back: a ray from
+    /// there to here crosses any surface the body passed through, and the hit tells us both
+    /// where it went in and which way is out.
+    /// </summary>
+    private void RecoverIfBuried()
+    {
+        if (!_hasClearPosition)
+        {
+            _lastClearPosition = GlobalPosition;
+            _hasClearPosition = true;
+            return;
+        }
+
+        Vector3 travel = GlobalPosition - _lastClearPosition;
+        if (travel.LengthSquared() < 0.000001f)
+        {
+            return;
+        }
+
+        var query = PhysicsRayQueryParameters3D.Create(_lastClearPosition, GlobalPosition, CollisionMask);
+        query.Exclude = new Godot.Collections.Array<Rid> { GetRid() };
+
+        var hit = GetWorld3D().DirectSpaceState.IntersectRay(query);
+        if (hit.Count == 0)
+        {
+            _lastClearPosition = GlobalPosition;
+            return;
+        }
+
+        // Only a face we moved *into* counts. Skimming along a slope also registers a hit, but
+        // there the normal is roughly perpendicular to travel rather than opposing it.
+        Vector3 normal = (Vector3)hit["normal"];
+        if (normal.Dot(travel.Normalized()) > -0.1f)
+        {
+            _lastClearPosition = GlobalPosition;
+            return;
+        }
+
+        GlobalPosition = (Vector3)hit["position"] + (normal * SurfaceRecoveryOffset);
+        Velocity = Vector3.Zero;
+        EndStep();
+        _lastClearPosition = GlobalPosition;
     }
 
     /// <summary>Gives up on a destination the agent has stopped closing on, so the state
