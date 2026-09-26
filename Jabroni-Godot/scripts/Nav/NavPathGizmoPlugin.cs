@@ -115,7 +115,7 @@ public partial class NavPathGizmoPlugin : EditorNode3DGizmoPlugin
 
 		_material.AlbedoColor = path.LineColor;
 
-		gizmo.AddMesh(BuildRibbon(path, points, path.LineThickness, camera), _material);
+		gizmo.AddMesh(NavPathRibbon.Build(path, points, path.LineThickness, camera), _material);
 	}
 
 	private static StandardMaterial3D BuildLabelMaterial(int index, Color color)
@@ -230,58 +230,4 @@ public partial class NavPathGizmoPlugin : EditorNode3DGizmoPlugin
 	// cross product) so the ribbon reads as a line from any viewing angle -- a flat,
 	// ground-plane quad goes edge-on and disappears when looking down at the terrain,
 	// which is the normal top-down editor view.
-	private static ImmediateMesh BuildRibbon(Node3D node, List<Vector3> points, float thickness, Camera3D camera)
-	{
-		var mesh = new ImmediateMesh();
-		float halfWidth = Mathf.Max(thickness, 0.001f) * 0.5f;
-
-		mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles);
-		for (int i = 0; i < points.Count - 1; i++)
-		{
-			Vector3 a = points[i];
-			Vector3 b = points[i + 1];
-			Vector3 globalA = node.ToGlobal(a);
-			Vector3 globalB = node.ToGlobal(b);
-			Vector3 direction = globalB - globalA;
-
-			if (direction.LengthSquared() < 0.0001f)
-			{
-				continue;
-			}
-
-			direction = direction.Normalized();
-
-			Vector3 perpendicular = default;
-			if (camera != null)
-			{
-				Vector3 toCamera = camera.GlobalPosition - (globalA + globalB) * 0.5f;
-				perpendicular = direction.Cross(toCamera);
-			}
-
-			// Camera missing, or the segment happens to point straight at it: fall back to
-			// a horizontal perpendicular so the ribbon still renders as something.
-			if (perpendicular.LengthSquared() < 0.0001f)
-			{
-				perpendicular = new Vector3(-direction.Z, 0f, direction.X);
-			}
-
-			perpendicular = perpendicular.Normalized() * halfWidth;
-
-			Vector3 a0 = node.ToLocal(globalA - perpendicular);
-			Vector3 a1 = node.ToLocal(globalA + perpendicular);
-			Vector3 b0 = node.ToLocal(globalB - perpendicular);
-			Vector3 b1 = node.ToLocal(globalB + perpendicular);
-
-			mesh.SurfaceAddVertex(a0);
-			mesh.SurfaceAddVertex(a1);
-			mesh.SurfaceAddVertex(b1);
-
-			mesh.SurfaceAddVertex(a0);
-			mesh.SurfaceAddVertex(b1);
-			mesh.SurfaceAddVertex(b0);
-		}
-
-		mesh.SurfaceEnd();
-		return mesh;
-	}
 }

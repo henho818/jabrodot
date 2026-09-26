@@ -29,6 +29,8 @@ public partial class NavPath : Node3D
 {
 	private Color _lineColor = new(1f, 0.9f, 0.2f);
 	private float _lineThickness = 0.08f;
+	private bool _showInGame;
+	private MeshInstance3D _runtimeRibbon;
 
 	[Export]
 	public Godot.Collections.Array<NodePath> NodePaths { get; set; } = new();
@@ -68,11 +70,86 @@ public partial class NavPath : Node3D
 	[Export]
 	public bool Looping { get; set; } = true;
 
+	/// <summary>
+	/// Draws the path in the running game, not just in the editor. The editor gizmo has no
+	/// runtime equivalent -- gizmos don't exist outside the editor -- so this builds the same
+	/// ribbon as real geometry instead. Off by default: it rebuilds every frame to keep facing
+	/// the camera, which is fine while debugging a patrol and waste the rest of the time.
+	///
+	/// Drawn without depth testing, so a path that has ended up under the terrain is still
+	/// visible -- which is usually the thing you turned this on to find out.
+	/// </summary>
+	[Export]
+	public bool ShowInGame
+	{
+		get => _showInGame;
+		set
+		{
+			_showInGame = value;
+			if (!value)
+			{
+				ClearRuntimeRibbon();
+			}
+		}
+	}
+
 	public override void _Process(double delta)
 	{
 		if (Engine.IsEditorHint())
 		{
 			UpdateGizmos();
+			return;
 		}
+
+		if (_showInGame)
+		{
+			DrawRuntimeRibbon();
+		}
+	}
+
+	private void DrawRuntimeRibbon()
+	{
+		List<Vector3> points = NavPathRibbon.CollectPoints(this);
+		if (points.Count < 2)
+		{
+			ClearRuntimeRibbon();
+			return;
+		}
+
+		if (_runtimeRibbon == null)
+		{
+			_runtimeRibbon = new MeshInstance3D
+			{
+				Name = "RuntimeRibbon",
+				CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+				MaterialOverride = new StandardMaterial3D
+				{
+					ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+					CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+					NoDepthTest = true,
+					AlbedoColor = _lineColor,
+				},
+			};
+			AddChild(_runtimeRibbon);
+		}
+
+		if (_runtimeRibbon.MaterialOverride is StandardMaterial3D material)
+		{
+			material.AlbedoColor = _lineColor;
+		}
+
+		_runtimeRibbon.Mesh = NavPathRibbon.Build(
+			this, points, _lineThickness, GetViewport()?.GetCamera3D());
+	}
+
+	private void ClearRuntimeRibbon()
+	{
+		if (_runtimeRibbon == null)
+		{
+			return;
+		}
+
+		_runtimeRibbon.QueueFree();
+		_runtimeRibbon = null;
 	}
 }

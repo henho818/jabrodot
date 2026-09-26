@@ -2,8 +2,14 @@ using Godot;
 
 namespace Jabroni.World;
 
-/// <summary>Shared NavigationAgent3D-driven CharacterBody3D movement for avatar/NPC archetypes.</summary>
-[Tool]
+/// <summary>
+/// Shared NavigationAgent3D-driven CharacterBody3D movement for avatar/NPC archetypes.
+///
+/// Deliberately not [Tool]: this drives gravity and MoveAndSlide, so running it in the editor
+/// simulates the characters while a scene is merely open -- they settle, drift off their
+/// authored spawns, and the moved position saves with the scene. AgentAI isn't [Tool] either,
+/// so editor ticking would also mean locomotion without the state machine that steers it.
+/// </summary>
 public partial class NavMeshLocomotion : CharacterBody3D, IAgentMover
 {
     /// <summary>Metres per second the agent walks at. Overwritten at startup by the agent's
