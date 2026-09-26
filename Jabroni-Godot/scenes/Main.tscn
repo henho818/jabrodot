@@ -13,8 +13,8 @@
 [ext_resource type="Script" uid="uid://d3qcdnpc5rtnv" path="res://scripts/AI/AgentVision.cs" id="13_vision"]
 [ext_resource type="Script" uid="uid://b7uujmxb7kr11" path="res://scripts/World/SurfaceLightController.cs" id="14_causticspivot"]
 [ext_resource type="PackedScene" path="res://scenes/UI/SettingsDebugOverlay.tscn" id="15_settingsoverlay"]
-[ext_resource type="Texture2D" uid="uid://cqmlqe0bxinfy" path="res://art/village/grass.jpg" id="16_grass_tex"]
-[ext_resource type="Texture2D" uid="uid://hmo8kjs82r86" path="res://art/village/brick.jpg" id="17_brick_tex"]
+[ext_resource type="Texture2D" path="res://art/village/grass.jpg" id="16_grass_tex"]
+[ext_resource type="Texture2D" path="res://art/village/brick.jpg" id="17_brick_tex"]
 [ext_resource type="Script" uid="uid://canj0wvtg13wx" path="res://scripts/Nav/NavPath.cs" id="18_navpath"]
 [ext_resource type="Script" uid="uid://cg1npj8twlxqh" path="res://scripts/Nav/NavNode.cs" id="19_navnode"]
 [ext_resource type="PackedScene" uid="uid://b1cybunvxcyli" path="res://scenes/narrator.tscn" id="19_nfivy"]
@@ -107,8 +107,14 @@ radius = 35.0
 [sub_resource type="SphereShape3D" id="SphereShape3D_shark_vision"]
 radius = 21.0
 
+[sub_resource type="BoxMesh" id="BoxMesh_1nqs0"]
+size = Vector3(1, 2, 1)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1nqs0"]
 albedo_color = Color(0.4704498, 0.18198991, 0.6211879, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1iba3"]
+size = Vector3(1, 2, 1)
 
 [node name="Main" type="Node3D" unique_id=821709867]
 script = ExtResource("4_click")
@@ -391,7 +397,7 @@ current = true
 fov = 30.0
 
 [node name="Avatar" type="CharacterBody3D" parent="." unique_id=1892381067]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.90024185, 21)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.00016055256, 21)
 collision_layer = 4
 collision_mask = 3
 floor_max_angle = 0.57595867
@@ -400,6 +406,7 @@ StepHeight = 1.0
 MinHopArc = 0.5
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Avatar" unique_id=1249903463]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 mesh = SubResource("CapsuleMesh_avatar")
 surface_material_override/0 = SubResource("StandardMaterial3D_avatar")
 
@@ -408,6 +415,7 @@ transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.25, -0.25)
 mesh = SubResource("BoxMesh_41buu")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Avatar" unique_id=340294300]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_avatar")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="Avatar" unique_id=612729479]
@@ -503,7 +511,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2708664, 0.94843113, 7.4008
 script = ExtResource("19_navnode")
 
 [node name="NPC2" parent="NPCs" unique_id=899351124 instance=ExtResource("11_bb450")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, 0.8995474, 11.836643)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, 0.0003285408, 11.836643)
 floor_max_angle = 0.57595867
 MinHopArc = 0.5
 
@@ -513,7 +521,11 @@ ChatDialogId = "D.Charity"
 metadata/PatrolPath = NodePath("../../NPC-PatrolPath")
 
 [node name="MeshInstance3D" parent="NPCs/NPC2" index="1" unique_id=252819915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 surface_material_override/0 = SubResource("StandardMaterial3D_1iba3")
+
+[node name="CollisionShape3D" parent="NPCs/NPC2" index="2" unique_id=1813255313]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 
 [node name="NPC-PatrolPath" type="Node3D" parent="NPCs" unique_id=1591746689]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.73058, 0.9, -10.9519005)
@@ -540,13 +552,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.209968, 2.1853886, -9.14685
 script = ExtResource("19_navnode")
 
 [node name="NPC" parent="NPCs" unique_id=57840602 instance=ExtResource("11_bb450")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, 0.90024185, -10.9519005)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.730579, -0.00014882162, -10.9519005)
 floor_max_angle = 0.57595867
 MinHopArc = 0.5
 
 [node name="AgentAI" parent="NPCs/NPC" index="0" unique_id=2100165297 node_paths=PackedStringArray("PatrolPath")]
 PatrolPath = NodePath("../../NPC-PatrolPath")
 metadata/PatrolPath = NodePath("../../NPC-PatrolPath")
+
+[node name="MeshInstance3D" parent="NPCs/NPC" index="1" unique_id=252819915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="CollisionShape3D" parent="NPCs/NPC" index="2" unique_id=1813255313]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 
 [node name="Shark" type="CharacterBody3D" parent="NPCs" unique_id=1475299422]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, 35)
@@ -613,7 +631,7 @@ script = ExtResource("19_navnode")
 metadata/StayDuration = 1.0
 
 [node name="Narrator" parent="NPCs" unique_id=1918904921 instance=ExtResource("19_nfivy")]
-transform = Transform3D(-0.6306913, 0, 0.77603376, 0, 1, 0, -0.77603376, 0, -0.6306913, 2.935176, 1.0001507, 11.3964)
+transform = Transform3D(-0.6306913, 0, 0.77603376, 0, 1, 0, -0.77603376, 0, -0.6306913, 2.935176, 1.0008088, 11.3964)
 floor_max_angle = 0.57595867
 MinHopArc = 0.5
 
@@ -621,7 +639,16 @@ MinHopArc = 0.5
 ChatDialogId = "D.Intro"
 
 [node name="MeshInstance3D" parent="NPCs/Narrator" index="1" unique_id=252819915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_1nqs0")
 surface_material_override/0 = SubResource("StandardMaterial3D_1nqs0")
+
+[node name="MeshInstance3D" parent="NPCs/Narrator/MeshInstance3D" index="0" unique_id=512422434]
+transform = Transform3D(0.75, 0, 0, 0, 0.25, 0, 0, 0, 1, 0, 0.607, -0.25)
+
+[node name="CollisionShape3D" parent="NPCs/Narrator" index="2" unique_id=1813255313]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("BoxShape3D_1iba3")
 
 [editable path="Village/TerrainSandbox"]
 [editable path="NPCs/NPC2"]
